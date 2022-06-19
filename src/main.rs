@@ -1,4 +1,6 @@
 use clap::{Args, Parser, Subcommand};
+use log::LevelFilter;
+use anyhow::Result;
 
 #[derive(Parser, Debug)]
 #[clap(
@@ -9,11 +11,14 @@ use clap::{Args, Parser, Subcommand};
 struct Cli {
     #[clap(subcommand)]
     command: Subcommands,
+
+    #[clap(short, long, default_value_t = 1)]
+    debug: u8,
 }
 
 #[derive(Debug, Subcommand)]
 enum Subcommands {
-    /// Server initialization
+    /// HTTP server initialization
     Init,
     /// Create a new draft post
     NewPost {
@@ -25,23 +30,46 @@ enum Subcommands {
     Publish
 }
 
-fn main() {
-    env_logger::init();
+fn main() -> Result<()> {
+    // env_logger::builder().filter_level(LevelFilter::).try_init();
+
+    let mut builder = env_logger::builder();
 
     let args = Cli::parse();
 
-    match args.command {
-        Subcommands::Init => {
-            log::debug!("Server initialization...")
-        },
-        Subcommands::NewPost { title } => {
-            log::debug!("Creating a new draft post...")
-        },
-        Subcommands::Ready => {
-            log::debug!("Checking and marking the post as ready to publish...")
-        },
-        Subcommands::Publish => {
-            log::debug!("Publishing your post to blog...")
+    match args.debug {
+        0 => {
+            println!("Debug mode is off!");
+            builder.filter_level(LevelFilter::Off).try_init()?
+        }
+        1 => {
+            println!("Debug mode is in info only!");
+            builder.filter_level(LevelFilter::Info).try_init()?
+        }
+        2 => {
+            println!("Debug mode is on!");
+            builder.filter_level(LevelFilter::Debug).try_init()?
+        }
+        _ => {
+            println!("Invalid Debug mode level!");
+            std::process::exit(1)
         }
     }
+
+    match args.command {
+        Subcommands::Init => {
+            log::info!("HTTP server initialization...");
+        },
+        Subcommands::NewPost { title } => {
+            log::info!("Creating a new draft post...")
+        },
+        Subcommands::Ready => {
+            log::info!("Checking and marking the post as ready to publish...")
+        },
+        Subcommands::Publish => {
+            log::info!("Publishing your post to blog...")
+        }
+    }
+
+    Ok(())
 }
