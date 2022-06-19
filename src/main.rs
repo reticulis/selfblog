@@ -1,12 +1,17 @@
-use clap::{Args, Parser, Subcommand};
-use log::LevelFilter;
 use anyhow::Result;
+use clap::{Args, Parser, Subcommand};
+use daemonize::Daemonize;
+use log::LevelFilter;
+use std::fs::File;
+use std::io::Read;
+use std::thread;
+use std::time::Duration;
 
 #[derive(Parser, Debug)]
 #[clap(
     author = "Writted by reticulis <reticulis@protonmail.com>",
     version = "0.0.0",
-    about = "Create your own simple blog!",
+    about = "Create your own simple blog!"
 )]
 struct Cli {
     #[clap(subcommand)]
@@ -18,21 +23,19 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Subcommands {
-    /// HTTP server initialization
-    Init,
+    /// Start HTTP server
+    Start,
+    /// Stop HTTP server
+    Stop,
     /// Create a new draft post
-    NewPost {
-        title: String
-    },
+    NewPost { title: String },
     /// Check and mark the post as ready to publish
     Ready,
     /// Publish your post to blog
-    Publish
+    Publish,
 }
 
 fn main() -> Result<()> {
-    // env_logger::builder().filter_level(LevelFilter::).try_init();
-
     let mut builder = env_logger::builder();
 
     let args = Cli::parse();
@@ -57,15 +60,38 @@ fn main() -> Result<()> {
     }
 
     match args.command {
-        Subcommands::Init => {
+        Subcommands::Start => {
             log::info!("HTTP server initialization...");
-        },
+            let stdout = File::create("/tmp/selfblog.out").unwrap();
+            let stderr = File::create("/tmp/selfblog.err").unwrap();
+
+            let daemonize = Daemonize::new()
+                .pid_file("/tmp/selfblog-daemon.pid")
+                .stdout(stdout)
+                .stderr(stderr);
+
+            match daemonize.start() {
+                Ok(_) => {
+                    unimplemented!()
+                }
+                Err(e) => log::error!("Error: {}", e),
+            }
+        }
+        Subcommands::Stop => {
+            log::debug!("Opening \"/tmp/selfblog-daemon.pid\"...");
+            let mut file_pid = File::open("/tmp/selfblog-daemon.pid")?;
+            let mut pid = String::new();
+            log::debug!("Reading \"/tmp/selfblog-daemon.pid\"...");
+            file_pid.read_to_string(&mut pid)?;
+            log::info!("Stoping server...");
+            std::process::Command::new("kill").arg(pid).spawn()?;
+        }
         Subcommands::NewPost { title } => {
             log::info!("Creating a new draft post...")
-        },
+        }
         Subcommands::Ready => {
             log::info!("Checking and marking the post as ready to publish...")
-        },
+        }
         Subcommands::Publish => {
             log::info!("Publishing your post to blog...")
         }
