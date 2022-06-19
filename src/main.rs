@@ -4,7 +4,7 @@ use daemonize::Daemonize;
 use log::LevelFilter;
 use std::fs::File;
 use std::io::Read;
-use std::thread;
+use std::{fs, thread};
 use std::time::Duration;
 
 #[derive(Parser, Debug)]
@@ -78,11 +78,8 @@ fn main() -> Result<()> {
             }
         }
         Subcommands::Stop => {
-            log::debug!("Opening \"/tmp/selfblog-daemon.pid\"...");
-            let mut file_pid = File::open("/tmp/selfblog-daemon.pid")?;
-            let mut pid = String::new();
             log::debug!("Reading \"/tmp/selfblog-daemon.pid\"...");
-            file_pid.read_to_string(&mut pid)?;
+            let pid = fs::read_to_string("/tmp/selfblog-daemon.pid")?;
             log::info!("Stoping server...");
             std::process::Command::new("kill").arg(pid).spawn()?;
         }
