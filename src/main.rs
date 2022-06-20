@@ -1,4 +1,3 @@
-#[macro_use] extern crate rocket;
 mod server;
 
 use anyhow::Result;
@@ -44,19 +43,18 @@ async fn main() -> Result<()> {
 
     match args.debug {
         0 => {
-            println!("Debug mode is off!");
-            builder.filter_level(LevelFilter::Off).try_init()?
+            builder.filter_level(LevelFilter::Off).try_init()?;
         }
         1 => {
-            println!("Debug mode is in info only!");
-            builder.filter_level(LevelFilter::Info).try_init()?
+            builder.filter_level(LevelFilter::Info).try_init()?;
+            log::info!("Debug mode is in info only!");
         }
         2 => {
-            println!("Debug mode is on!");
-            builder.filter_level(LevelFilter::Debug).try_init()?
+            builder.filter_level(LevelFilter::Debug).try_init()?;
+            log::debug!("Debug mode is on!");
         }
         _ => {
-            println!("Invalid Debug mode level!");
+            eprintln!("Invalid Debug mode level!");
             std::process::exit(1)
         }
     }
@@ -85,14 +83,17 @@ async fn main() -> Result<()> {
             log::info!("Stoping server...");
             std::process::Command::new("kill").arg(pid).spawn()?;
         }
-        Subcommands::NewPost { title } => {
-            log::info!("Creating a new draft post...")
+        Subcommands::NewPost { title: _ } => {
+            log::info!("Creating a new draft post...");
+            unimplemented!();
         }
         Subcommands::Ready => {
-            log::info!("Checking and marking the post as ready to publish...")
+            log::info!("Checking and marking the post as ready to publish...");
+            unimplemented!();
         }
         Subcommands::Publish => {
-            log::info!("Publishing your post to blog...")
+            log::info!("Publishing your post to blog...");
+            unimplemented!();
         }
     }
 

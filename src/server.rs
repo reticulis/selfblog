@@ -1,4 +1,3 @@
-use anyhow::Result;
 use rocket::{Build, Rocket, routes};
 use rocket::fs::NamedFile;
 use rocket::fs::{FileServer, relative};
