@@ -1,11 +1,12 @@
+#[macro_use] extern crate rocket;
+mod server;
+
 use anyhow::Result;
-use clap::{Args, Parser, Subcommand};
+use clap::{Parser, Subcommand};
 use daemonize::Daemonize;
 use log::LevelFilter;
 use std::fs::File;
-use std::io::Read;
-use std::{fs, thread};
-use std::time::Duration;
+use std::fs;
 
 #[derive(Parser, Debug)]
 #[clap(
@@ -35,7 +36,8 @@ enum Subcommands {
     Publish,
 }
 
-fn main() -> Result<()> {
+#[tokio::main(flavor = "current_thread")]
+async fn main() -> Result<()> {
     let mut builder = env_logger::builder();
 
     let args = Cli::parse();
@@ -72,7 +74,7 @@ fn main() -> Result<()> {
 
             match daemonize.start() {
                 Ok(_) => {
-                    unimplemented!()
+                    let _ = server::rocket().launch().await?;
                 }
                 Err(e) => log::error!("Error: {}", e),
             }
