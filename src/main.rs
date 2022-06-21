@@ -1,11 +1,9 @@
 mod server;
+mod subcommands;
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
-use daemonize::Daemonize;
 use log::LevelFilter;
-use std::fs::File;
-use std::fs;
 
 #[derive(Parser, Debug)]
 #[clap(
@@ -23,6 +21,8 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Subcommands {
+    /// Create required files
+    Init { config: String },
     /// Start HTTP server
     Start,
     /// Stop HTTP server
@@ -60,29 +60,11 @@ async fn main() -> Result<()> {
     }
 
     match args.command {
-        Subcommands::Start => {
-            log::info!("HTTP server initialization...");
-            let stdout = File::create("/tmp/selfblog.out").unwrap();
-            let stderr = File::create("/tmp/selfblog.err").unwrap();
-
-            let daemonize = Daemonize::new()
-                .pid_file("/tmp/selfblog-daemon.pid")
-                .stdout(stdout)
-                .stderr(stderr);
-
-            match daemonize.start() {
-                Ok(_) => {
-                    let _ = server::rocket().launch().await?;
-                }
-                Err(e) => log::error!("Error: {}", e),
-            }
+        Subcommands::Init { config: _ } => {
+            unimplemented!()
         }
-        Subcommands::Stop => {
-            log::debug!("Reading \"/tmp/selfblog-daemon.pid\"...");
-            let pid = fs::read_to_string("/tmp/selfblog-daemon.pid")?;
-            log::info!("Stoping server...");
-            std::process::Command::new("kill").arg(pid).spawn()?;
-        }
+        Subcommands::Start => subcommands::start().await?,
+        Subcommands::Stop => subcommands::stop()?,
         Subcommands::NewPost { title: _ } => {
             log::info!("Creating a new draft post...");
             unimplemented!();
