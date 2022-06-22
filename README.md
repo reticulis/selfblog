@@ -1,4 +1,6 @@
 # selfblog
+**Project isn't done!**
+
 Create your own simple blog!
 
 *Actually, `selfblog` works only on localhost!*
