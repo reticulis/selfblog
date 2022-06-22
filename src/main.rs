@@ -1,9 +1,11 @@
+mod config;
 mod server;
 mod subcommands;
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use log::LevelFilter;
+use std::error::Error;
 
 #[derive(Parser, Debug)]
 #[clap(
@@ -36,7 +38,7 @@ enum Subcommands {
 }
 
 #[tokio::main(flavor = "current_thread")]
-async fn main() -> Result<()> {
+async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     let mut builder = env_logger::builder();
 
     let args = Cli::parse();
@@ -60,9 +62,7 @@ async fn main() -> Result<()> {
     }
 
     match args.command {
-        Subcommands::Init { config: _ } => {
-            unimplemented!()
-        }
+        Subcommands::Init { config } => subcommands::init(&config)?,
         Subcommands::Start => subcommands::start().await?,
         Subcommands::Stop => subcommands::stop()?,
         Subcommands::NewPost { title: _ } => {

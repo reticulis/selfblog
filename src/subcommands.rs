@@ -1,13 +1,31 @@
+use anyhow::{Context, Error, Result};
+use daemonize::Daemonize;
 use std::fs;
 use std::fs::File;
 use std::io::ErrorKind;
-use daemonize::Daemonize;
-use anyhow::{Error, Result};
+
+pub fn init(config: &str) -> Result<()> {
+    log::debug!("Creating \"selfblog\" directory...");
+    let mut path = dirs::home_dir().with_context(|| "Failed getting home dir path!")?;
+    path.push(".selfblog/");
+    match fs::create_dir(&path) {
+        Ok(()) => (),
+        Err(err) => match err.kind() {
+            ErrorKind::AlreadyExists => {}
+            _ => return Err(err).with_context(|| format!("Failed creating {:?}", &path)),
+        },
+    }
+    log::debug!("Copying configuration file to {:?}", &path);
+    path.push(&config);
+    fs::copy(&config, &path).with_context(|| "Failed copying configuration file!")?;
+    log::info!("Done!");
+    Ok(())
+}
 
 pub async fn start() -> Result<()> {
     log::info!("HTTP server initialization...");
-    let stdout = File::create("/tmp/selfblog.out").unwrap();
-    let stderr = File::create("/tmp/selfblog.err").unwrap();
+    let stdout = File::create("/tmp/selfblog.out")?;
+    let stderr = File::create("/tmp/selfblog.err")?;
 
     let daemonize = Daemonize::new()
         .pid_file("/tmp/selfblog-daemon.pid")
@@ -31,11 +49,10 @@ pub fn stop() -> Result<()> {
         Ok(f) => f,
         Err(e) => match e.kind() {
             ErrorKind::NotFound => {
-                log::error!("Not found running server!");
-                std::process::exit(1)
-            },
-            _ => return Err(Error::from(e))
-        }
+                return Err(e).with_context(|| "Not found running server!")
+            }
+            _ => return Err(Error::from(e)),
+        },
     };
     log::info!("Stoping server...");
     std::process::Command::new("kill").arg(pid).spawn()?;
