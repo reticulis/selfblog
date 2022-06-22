@@ -3,6 +3,7 @@ use derive_more::{Display, Error};
 use serde_derive::Deserialize;
 use std::error::Error;
 use std::fs;
+use std::path::PathBuf;
 
 #[derive(Default, Debug, Deserialize)]
 pub struct Blog {
@@ -17,9 +18,10 @@ struct ConfigParseError;
 
 #[allow(dead_code)]
 impl Blog {
-    pub fn new(config: &str) -> Result<Self, Box<dyn Error + Send + Sync>> {
+    pub fn new(config: &PathBuf) -> Result<Self, Box<dyn Error + Send + Sync>> {
         let toml = fs::read_to_string(config)?;
         let value: Blog = toml::from_str(&toml)?;
+
         Ok(value)
     }
 }
