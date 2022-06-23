@@ -6,9 +6,9 @@ use std::io::ErrorKind;
 
 pub fn init(config: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     log::debug!("Creating \"selfblog\" directory...");
-    let mut path = dirs::home_dir().with_context(|| "Failed getting home dir path!")?;
-
-    path.push(".selfblog/");
+    let mut path = dirs::home_dir()
+        .with_context(|| "Failed getting home dir path!")?
+        .join(".selfblog/");
 
     match fs::create_dir(&path) {
         Ok(()) => (),

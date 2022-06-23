@@ -1,0 +1,66 @@
+@font-face {
+    font-family: 'jetbrains-nerd-font';
+    src: url('fonts/jetbrains-mono-nerd-font.ttf');
+}
+
+body {
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0.60), rgba(0, 0, 0, 0.60)), url("nasa_image.png");
+}
+
+.header {
+    display: flex;
+    width: 50%;
+    margin: 2% auto 0;
+}
+
+.side {
+    margin: 0 auto;
+}
+
+.main {
+    display: flex;
+    width: 50%;
+    margin: 0 auto -60px;
+}
+
+.posts {
+    margin: 0 auto;
+    float: bottom;
+    width: 50%;
+}
+
+.post {
+    text-decoration: none;
+}
+
+
+.text {
+    font-size: 25px;
+    color: white;
+    font-family: jetbrains-nerd-font, serif;
+}
+
+.main_text {
+    font-size: 45px;
+}
+
+.title_text {
+    margin-left: 20px;
+    margin-bottom: -20px;
+}
+
+.description_text {
+    font-size: 15px;
+    color: #9a9a9a;
+}
+
+.button {
+    background: rgba(255, 255, 255, 0.23);
+    border-radius: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 3em;
+    width: 12em;
+    text-decoration: none;
+}
