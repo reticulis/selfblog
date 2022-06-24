@@ -1,20 +1,24 @@
+mod config;
 
-use std::fs;
 use std::fs::File;
+use std::net::IpAddr;
 use rocket::fs::FileServer;
 use rocket::{Build, Rocket};
 use daemonize::Daemonize;
 use anyhow::{Context, Result};
 use log::LevelFilter;
 use derive_more::{Error, Display};
-use toml::Value;
+use crate::config::ConfigFile;
 
 #[derive(Default, Debug, Display, Error)]
 struct HomeDirParseError;
 
-pub fn rocket(path: &str) -> Rocket<Build> {
-    rocket::build()
-        .mount("/", FileServer::from(path))
+pub fn rocket(server: config::Server) -> Rocket<Build> {
+    let figment = rocket::Config::figment()
+        .merge(("address", IpAddr::from(server.address)))
+        .merge(("port", server.port));
+    rocket::custom(figment)
+        .mount("/", FileServer::from(server.website_path))
 }
 
 #[tokio::main(flavor = "current_thread")]
@@ -38,18 +42,14 @@ pub async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let _ = match daemonize.start() {
         Ok(_) => {
             log::debug!("Reading configuration file...");
-            let value = fs::read_to_string(
+            let config = ConfigFile::new(
                 dirs::home_dir()
-                    .with_context(|| "Failed getting home dir path!")?
-                    .join(".selfblog/config.toml")
-            )?.parse::<Value>()?;
+                .with_context(|| "Failed getting home dir path!")?
+                .join(".selfblog/config.toml")
+            )?;
 
             log::debug!("Getting \"website_path\" value from configuration file...");
-            let website_path = value
-                .get("website_path")
-                .with_context(|| "Failed getting website_path from config file!")?
-                .as_str()
-                .with_context(|| "Failed getting website_path from config file!")?;
+            let website_path = config.server;
 
             log::debug!("Launching HTTP server");
             let _ = rocket(website_path).launch().await?;

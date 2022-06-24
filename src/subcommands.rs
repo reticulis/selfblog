@@ -21,8 +21,9 @@ pub fn init(config: &str) -> Result<()> {
     fs::copy(&config, &path).with_context(|| "Failed copying configuration file!")?;
 
     log::debug!("Creating blog root directory...");
-    let working_dir = super::config::Blog::new(&path)?.working_dir;
-    fs::create_dir_all(working_dir + "/posts").with_context(|| "Failed creating blog root directory")?;
+    let website_path = super::config::ConfigFile::new(path)?.server.website_path;
+    fs::create_dir_all(website_path + "/posts")
+        .with_context(|| "Failed creating blog root directory")?;
 
     log::info!("Done!");
     Ok(())

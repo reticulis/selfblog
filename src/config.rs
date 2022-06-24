@@ -1,25 +1,36 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use derive_more::{Display, Error};
 use serde_derive::Deserialize;
 use std::fs;
 use std::path::PathBuf;
 
 #[derive(Default, Debug, Deserialize)]
+pub struct ConfigFile {
+    pub blog: Blog,
+    pub server: Server,
+}
+
+#[derive(Default, Debug, Deserialize)]
 pub struct Blog {
-    pub name: String,
-    pub address: String,
-    pub working_dir: String,
-    pub template: String,
+    pub title: String,
+    pub author: String
+}
+
+#[derive(Default, Debug, Deserialize)]
+pub struct Server {
+    pub address: [u8; 4],
+    pub port: u32,
+    pub website_path: String,
 }
 
 #[derive(Default, Debug, Display, Error)]
 struct ConfigParseError;
 
-#[allow(dead_code)]
-impl Blog {
-    pub fn new(config: &PathBuf) -> Result<Self> {
+impl ConfigFile {
+    pub fn new(config: PathBuf) -> Result<Self> {
         let toml = fs::read_to_string(config)?;
-        let value: Blog = toml::from_str(&toml)?;
+        let value: ConfigFile = toml::from_str(&toml)
+            .with_context(|| "Failed parsing file!")?;
 
         Ok(value)
     }
