@@ -1,6 +1,6 @@
 # selfblog
-### All things in this project is for learning purposes
-**Project isn't done!**
+### ***All things in this project is for learning purposes***
+***Project isn't done!***
 
 Create your own simple blog!
 
