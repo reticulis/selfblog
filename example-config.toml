@@ -1,0 +1,8 @@
+[blog]
+title = "Simple blog!"
+author = "reticulis"
+
+[server]
+address = [127, 0, 0, 1]
+port = 8000
+website_path = "/home/<username>/selfblog/example_blog"
