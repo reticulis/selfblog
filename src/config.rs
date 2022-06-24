@@ -1,7 +1,6 @@
 use anyhow::Result;
 use derive_more::{Display, Error};
 use serde_derive::Deserialize;
-use std::error::Error;
 use std::fs;
 use std::path::PathBuf;
 
@@ -18,7 +17,7 @@ struct ConfigParseError;
 
 #[allow(dead_code)]
 impl Blog {
-    pub fn new(config: &PathBuf) -> Result<Self, Box<dyn Error + Send + Sync>> {
+    pub fn new(config: &PathBuf) -> Result<Self> {
         let toml = fs::read_to_string(config)?;
         let value: Blog = toml::from_str(&toml)?;
 

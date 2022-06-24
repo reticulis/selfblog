@@ -1,7 +1,13 @@
 [package]
-name = "selfblog"
-version = "0.1.0"
+name = "selfblog-cli"
+version = "0.0.0"
 edition = "2021"
+
+[[bin]]
+name = "selfblog-server"
+version = "0.0.0"
+edition = "2021"
+path = "src/server/server.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

@@ -1,11 +1,9 @@
 mod config;
-mod server;
 mod subcommands;
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use log::LevelFilter;
-use std::error::Error;
 
 #[derive(Parser, Debug)]
 #[clap(
@@ -37,8 +35,7 @@ enum Subcommands {
     Publish,
 }
 
-#[tokio::main(flavor = "current_thread")]
-async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
+fn main() -> Result<()> {
     let mut builder = env_logger::builder();
 
     let args = Cli::parse();
@@ -63,7 +60,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
 
     match args.command {
         Subcommands::Init { config } => subcommands::init(&config)?,
-        Subcommands::Start => subcommands::start().await?,
+        Subcommands::Start => subcommands::start()?,
         Subcommands::Stop => subcommands::stop()?,
         Subcommands::NewPost { title: _ } => {
             log::info!("Creating a new draft post...");

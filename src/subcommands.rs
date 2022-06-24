@@ -1,10 +1,8 @@
 use anyhow::{Context, Error, Result};
-use daemonize::Daemonize;
 use std::fs;
-use std::fs::File;
 use std::io::ErrorKind;
 
-pub fn init(config: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+pub fn init(config: &str) -> Result<()> {
     log::debug!("Creating \"selfblog\" directory...");
     let mut path = dirs::home_dir()
         .with_context(|| "Failed getting home dir path!")?
@@ -30,24 +28,9 @@ pub fn init(config: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>
     Ok(())
 }
 
-pub async fn start() -> Result<()> {
+pub fn start() -> Result<()> {
     log::info!("HTTP server initialization...");
-    let stdout = File::create("/tmp/selfblog.out")?;
-    let stderr = File::create("/tmp/selfblog.err")?;
-
-    let daemonize = Daemonize::new()
-        .pid_file("/tmp/selfblog-daemon.pid")
-        .stdout(stdout)
-        .stderr(stderr);
-
-    log::debug!("Starting daemon...");
-    match daemonize.start() {
-        Ok(_) => {
-            log::debug!("Starting HTTP server...");
-            let _ = super::server::rocket().launch().await?;
-        }
-        Err(e) => log::error!("Error: {}", e),
-    }
+    std::process::Command::new("selfblog-server").spawn()?;
     Ok(())
 }
 
