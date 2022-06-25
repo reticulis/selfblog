@@ -2,8 +2,10 @@ use anyhow::{Context, Error, Result};
 use std::fs;
 use std::fs::File;
 use std::io::{ErrorKind, Write};
+use chrono::Datelike;
 use crate::config::ConfigFile;
 use derive_more::{Error, Display};
+use pulldown_cmark::{html, Parser};
 
 #[derive(Default, Debug, Error, Display)]
 struct NewPostError;
@@ -82,35 +84,11 @@ pub fn new_post(title: &str) -> Result<()> {
         }
     }
 
-    log::debug!("Reading configuration file...");
-    let string = fs::read_to_string(
-        dirs::home_dir().with_context(|| "Failed getting home dir path!")?
-            .join(".selfblog/config.toml")
-    )?;
-    let config: ConfigFile = toml::from_str(&string)?;
-
     log::debug!("Creating a post...");
-    let post_path = format!(
-        "{}/posts/{}.md",
-        config.server.website_path,
-        title.split_whitespace()
-            .collect::<Vec<&str>>()
-            .join("_")
-    );
-
-    log::debug!("Checking if post with same title already exists...");
-    match File::open(&post_path) {
-        Ok(_) => {
-            log::error!("Post with same title already exists!");
-            return Err(NewPostError).with_context(|| "Post with same title already exists!")
-        }
-        Err(e) => match e.kind() {
-            ErrorKind::NotFound => {
-                File::create(&post_path)?;
-            },
-            _ => return Err(e).with_context(|| "Error checking old posts!")
-        }
-    }
+    let post_path = dirs::home_dir()
+        .with_context(|| "Failed getting home dir path!")?
+        .join(".selfblog/post.md");
+    File::create(&post_path)?;
 
     log::debug!("Creating a tmp file...");
     let mut file = File::create(
@@ -118,14 +96,85 @@ pub fn new_post(title: &str) -> Result<()> {
             .join(".selfblog/.new_post.lock")
     )?;
 
-    file.write(&post_path.as_bytes())?;
+    log::debug!("Writing info to tmp file...");
+    file.write(title.as_bytes())?;
 
-    println!(
-        "Post created successfully! \n\
-        Now, edit your a new post and mark as ready to publish! \n\
-        File post location: \"{}\"",
+    log::info!(
+        "\nPost created successfully!\n\
+        Now, edit your a new post and mark as ready to publish!\n\
+        File post location: {:?}",
         &post_path
     );
 
+    Ok(())
+}
+
+pub fn ready() -> Result<()> {
+    log::debug!("Reading lock file...");
+    let tmp =dirs::home_dir()
+        .with_context(|| "Failed getting home dir path!")?
+        .join(".selfblog/.ready.lock");
+
+    match File::open(&tmp) {
+        Ok(_) => {
+            log::error!("{:?} is exists!", &tmp);
+            return Err(NewPostError).with_context(||
+                "Lock file is exists!\n\
+                You already have post ready!"
+            )
+        }
+        Err(e) => match e.kind() {
+            ErrorKind::NotFound => {},
+            _ => return Err(e).with_context(|| "Error opening file!")
+        }
+    }
+
+    log::debug!("Creating lock file...");
+    File::create(&tmp)?;
+
+    log::debug!("Reading '.new_post.lock'...");
+    let lock_file = fs::read_to_string(
+        dirs::home_dir()
+            .with_context(|| "Failed getting home dir path!")?
+            .join(".selfblog/.new_post.lock")
+    )?;
+
+    let date = chrono::Local::now();
+    let main_title = format!(
+        "<p>{}: {}</p>",
+        format!("{}-{}-{}", date.year(), date.month(), date.day()),
+        &lock_file
+    );
+
+    log::debug!("Reading markdown from file...");
+    let markdown = fs::read_to_string(
+        dirs::home_dir()
+            .with_context(|| "Failed getting home dir path!")?
+            .join(".selfblog/post.md")
+    )?;
+    let parser = Parser::new(&markdown);
+    let mut html_output = String::new();
+    html::push_html(&mut html_output, parser);
+
+    log::debug!("Reading configuration file...");
+    let template_path = ConfigFile::new(
+        dirs::home_dir()
+            .with_context(|| "Failed getting home dir path!")?
+            .join(".selfblog/config.toml")
+    )?.blog.template_path;
+
+    log::debug!("Reading template file...");
+    let template = fs::read_to_string(&template_path)?
+        .replace("[selfblog_main_title]", &main_title)
+        .replace("[selfblog_post]", &html_output);
+
+    log::debug!("Creating '.post_ready' file...");
+    File::create(
+        dirs::home_dir()
+            .with_context(|| "Failed getting home dir path!")?
+            .join(".selfblog/.post_ready")
+    )?.write(template.as_bytes())?;
+
+    log::info!("Done!");
     Ok(())
 }

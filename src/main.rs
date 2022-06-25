@@ -61,10 +61,7 @@ fn main() -> Result<()> {
         Subcommands::Start => subcommands::start()?,
         Subcommands::Stop => subcommands::stop()?,
         Subcommands::NewPost { title } => subcommands::new_post(&title)?,
-        Subcommands::Ready => {
-            log::info!("Checking and marking the post as ready to publish...");
-            unimplemented!();
-        }
+        Subcommands::Ready => subcommands::ready()?,
         Subcommands::Publish => {
             log::info!("Publishing your post to blog...");
             unimplemented!();
