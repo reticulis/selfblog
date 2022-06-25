@@ -82,12 +82,6 @@ pub fn new_post(title: &str) -> Result<()> {
         }
     }
 
-    log::debug!("Creating a tmp file...");
-    let mut file = File::create(
-        dirs::home_dir().with_context(|| "Failed getting home dir path!")?
-        .join(".selfblog/.new_post.lock")
-    )?;
-
     log::debug!("Reading configuration file...");
     let string = fs::read_to_string(
         dirs::home_dir().with_context(|| "Failed getting home dir path!")?
@@ -104,8 +98,6 @@ pub fn new_post(title: &str) -> Result<()> {
             .join("_")
     );
 
-    file.write(&post_path.as_bytes())?;
-
     log::debug!("Checking if post with same title already exists...");
     match File::open(&post_path) {
         Ok(_) => {
@@ -119,6 +111,14 @@ pub fn new_post(title: &str) -> Result<()> {
             _ => return Err(e).with_context(|| "Error checking old posts!")
         }
     }
+
+    log::debug!("Creating a tmp file...");
+    let mut file = File::create(
+        dirs::home_dir().with_context(|| "Failed getting home dir path!")?
+            .join(".selfblog/.new_post.lock")
+    )?;
+
+    file.write(&post_path.as_bytes())?;
 
     println!(
         "Post created successfully! \n\
