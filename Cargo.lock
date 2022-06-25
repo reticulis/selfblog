@@ -740,27 +740,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "maud"
-version = "0.23.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7384febb4f8fc970cc2efab1650a6f48cac2e79b0b29587c90497b646fb10e1e"
-dependencies = [
- "maud_macros",
-]
-
-[[package]]
-name = "maud_macros"
-version = "0.23.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "423430ac467408136d7de93f2929debd8a7bc3e795c92476f45e259b158e3355"
-dependencies = [
- "proc-macro-error",
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
 name = "memchr"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1209,7 +1188,6 @@ dependencies = [
  "env_logger",
  "figment",
  "log",
- "maud",
  "rocket",
  "serde",
  "serde_derive",

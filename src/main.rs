@@ -41,9 +41,7 @@ fn main() -> Result<()> {
     let args = Cli::parse();
 
     match args.debug {
-        0 => {
-            builder.filter_level(LevelFilter::Off).try_init()?;
-        }
+        0 => builder.filter_level(LevelFilter::Off).try_init()?,
         1 => {
             builder.filter_level(LevelFilter::Info).try_init()?;
             log::info!("Debug mode is in info only!");
@@ -62,10 +60,7 @@ fn main() -> Result<()> {
         Subcommands::Init { config } => subcommands::init(&config)?,
         Subcommands::Start => subcommands::start()?,
         Subcommands::Stop => subcommands::stop()?,
-        Subcommands::NewPost { title: _ } => {
-            log::info!("Creating a new draft post...");
-            unimplemented!();
-        }
+        Subcommands::NewPost { title } => subcommands::new_post(&title)?,
         Subcommands::Ready => {
             log::info!("Checking and marking the post as ready to publish...");
             unimplemented!();
