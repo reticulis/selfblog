@@ -1,7 +1,7 @@
 use anyhow::{Context, Error, Result};
 use std::fs;
 use std::fs::File;
-use std::io::ErrorKind;
+use std::io::{ErrorKind, Write};
 use crate::config::ConfigFile;
 use derive_more::{Error, Display};
 
@@ -83,7 +83,7 @@ pub fn new_post(title: &str) -> Result<()> {
     }
 
     log::debug!("Creating a tmp file...");
-    File::create(
+    let mut file = File::create(
         dirs::home_dir().with_context(|| "Failed getting home dir path!")?
         .join(".selfblog/.new_post.lock")
     )?;
@@ -103,6 +103,8 @@ pub fn new_post(title: &str) -> Result<()> {
             .collect::<Vec<&str>>()
             .join("_")
     );
+
+    file.write(&post_path.as_bytes())?;
 
     log::debug!("Checking if post with same title already exists...");
     match File::open(&post_path) {
