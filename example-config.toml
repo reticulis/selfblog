@@ -1,8 +1,15 @@
 [blog]
+# Set title of blog
 title = "Simple blog!"
+# Set author of blog
 author = "reticulis"
+# Set location of template path, selfblog will be
+# use it for creating a new posts
+template_path = "/home/<username>/template.html"
 
 [server]
+# Set port and IP address whereby selfblog will be listening
 address = [127, 0, 0, 1]
 port = 8000
+# Set website path, selfblog-server will be working on it
 website_path = "/home/<username>/selfblog/example_blog"
