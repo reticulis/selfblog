@@ -238,7 +238,7 @@ pub fn publish() -> Result<()> {
             &*format!(
                 "<!-- [new_post_redirect] -->\n\
                 <a href=\"posts/{}.html\" class=\"post\">\n\
-                <p class=\"text title_text\">{}-{}-{}: {}</p>\n\
+                <p class=\"text title_text\">{}-{:>02}-{:>02}: {}</p>\n\
                 <p class=\"text title_text description_text\">{}</p>\n\
                 </a>",
                 &post_info.title.split_whitespace().collect::<String>(),
