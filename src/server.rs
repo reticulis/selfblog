@@ -42,11 +42,7 @@ pub async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let _ = match daemonize.start() {
         Ok(_) => {
             log::debug!("Reading configuration file...");
-            let config = ConfigFile::new(
-                dirs::home_dir()
-                .with_context(|| "Failed getting home dir path!")?
-                .join(".selfblog/config.toml")
-            )?;
+            let config = ConfigFile::new()?;
 
             log::debug!("Getting \"website_path\" value from configuration file...");
             let website_path = config.server;

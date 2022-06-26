@@ -29,7 +29,7 @@ pub fn init(config: &str) -> Result<()> {
     fs::copy(&config, &path).with_context(|| "Failed copying configuration file!")?;
 
     log::debug!("Creating blog root directory...");
-    let website_path = super::config::ConfigFile::new(path)?.server.website_path;
+    let website_path = super::config::ConfigFile::new()?.server.website_path;
     fs::create_dir_all(website_path + "/posts")
         .with_context(|| "Failed creating blog root directory")?;
 
@@ -157,11 +157,7 @@ pub fn ready() -> Result<()> {
     html::push_html(&mut html_output, parser);
 
     log::debug!("Reading configuration file...");
-    let template_path = ConfigFile::new(
-        dirs::home_dir()
-            .with_context(|| "Failed getting home dir path!")?
-            .join(".selfblog/config.toml")
-    )?.blog.template_path;
+    let template_path = ConfigFile::new()?.blog.template_path;
 
     log::debug!("Reading template file...");
     let template = fs::read_to_string(&template_path)?

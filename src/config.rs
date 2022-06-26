@@ -2,7 +2,6 @@ use anyhow::{Context, Result};
 use derive_more::{Display, Error};
 use serde_derive::Deserialize;
 use std::fs;
-use std::path::PathBuf;
 
 #[derive(Default, Debug, Deserialize)]
 pub struct ConfigFile {
@@ -28,7 +27,10 @@ pub struct Server {
 struct ConfigParseError;
 
 impl ConfigFile {
-    pub fn new(config: PathBuf) -> Result<Self> {
+    pub fn new() -> Result<Self> {
+        let config = dirs::home_dir()
+            .with_context(|| "Error getting home dir path!")?
+            .join(".selfblog/config.toml");
         let toml = fs::read_to_string(config)?;
         let value: ConfigFile = toml::from_str(&toml)
             .with_context(|| "Failed parsing file!")?;
