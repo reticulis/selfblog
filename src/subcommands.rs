@@ -111,19 +111,17 @@ pub fn new_post(title: &str) -> Result<()> {
 
 pub fn ready() -> Result<()> {
     log::debug!("Checking if '.new_post.lock' already exists...");
-    match File::open(dirs::home_dir()
-        .with_context(|| "Failed getting home dir path!")?
-        .join(".selfblog/.new_post.lock")) {
-        Ok(_) => {},
-        Err(e) => {
-            log::error!("Not found '.new_post.lock'!");
-            log::info!("First, create your post before marking it as ready!");
-            return Err(e)?
-        }
+    if let Err(e) = File::open(
+            dirs::home_dir()
+            .with_context(|| "Failed getting home dir path!"
+        )?.join(".selfblog/.new_post.lock")) {
+        log::error!("Not found '.new_post.lock'!");
+        log::info!("First, create your post before marking it as ready!");
+        return Err(e)?
     }
 
     log::debug!("Reading lock file...");
-    let tmp =dirs::home_dir()
+    let tmp = dirs::home_dir()
         .with_context(|| "Failed getting home dir path!")?
         .join(".selfblog/.ready.lock");
 
