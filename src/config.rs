@@ -2,6 +2,7 @@ use anyhow::{Context, Result};
 use derive_more::{Display, Error};
 use serde_derive::Deserialize;
 use std::fs;
+use std::path::PathBuf;
 
 #[derive(Default, Debug, Deserialize)]
 pub struct ConfigFile {
@@ -20,7 +21,7 @@ pub struct Blog {
 pub struct Server {
     pub address: [u8; 4],
     pub port: u32,
-    pub website_path: String,
+    pub website_path: PathBuf,
 }
 
 #[derive(Default, Debug, Display, Error)]
