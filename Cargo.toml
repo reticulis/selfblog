@@ -1,11 +1,11 @@
 [package]
 name = "selfblog-cli"
-version = "0.0.0"
+version = "0.1.0"
 edition = "2021"
 
 [[bin]]
 name = "selfblog-server"
-version = "0.0.0"
+version = "0.1.0"
 edition = "2021"
 path = "src/server.rs"
 
