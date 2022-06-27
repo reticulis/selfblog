@@ -148,7 +148,7 @@ pub fn ready() -> Result<()> {
     let date = chrono::Local::now();
     let main_title = format!(
         "<p>{}: {}</p>",
-        format!("{}-{}-{}", date.year(), date.month(), date.day()),
+        format!("{}-{:>02}-{:>02}", date.year(), date.month(), date.day()),
         &lock_file.title
     );
 
