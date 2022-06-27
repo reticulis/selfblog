@@ -1,21 +1,20 @@
+use crate::config::ConfigFile;
+use crate::home;
 use anyhow::{Context, Error, Result};
+use chrono::Datelike;
+use derive_more::{Display, Error};
+use pulldown_cmark::{html, Parser};
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::fs::File;
 use std::io::{ErrorKind, Write};
-use chrono::Datelike;
-use crate::config::ConfigFile;
-use derive_more::{Error, Display};
-use pulldown_cmark::{html, Parser};
-use serde::{Serialize, Deserialize};
 
 #[derive(Default, Debug, Error, Display)]
 struct NewPostError;
 
 pub fn init(config: &str) -> Result<()> {
     log::debug!("Creating \"selfblog\" directory...");
-    let mut path = dirs::home_dir()
-        .with_context(|| "Failed getting home dir path!")?
-        .join(".selfblog/");
+    let mut path = home()?.join(".selfblog/");
 
     match fs::create_dir(&path) {
         Ok(()) => (),
@@ -73,40 +72,33 @@ pub fn new_post(title: &str, description: &str) -> Result<()> {
     log::info!("Creating a new draft post...");
 
     log::debug!("Trying open a tmp file...");
-    let tmp =dirs::home_dir()
-        .with_context(|| "Failed getting home dir path!")?
-        .join(".selfblog/.new_post.lock");
+    let tmp = home()?.join(".selfblog/.new_post.lock");
 
     match File::open(&tmp) {
         Ok(_) => {
             log::error!("{:?} is exists!", &tmp);
-            return Err(NewPostError).with_context(||
+            return Err(NewPostError).with_context(|| {
                 "Lock file is exists!\n\
                 You already have a new draft post!"
-            )
+            });
         }
         Err(e) => match e.kind() {
-            ErrorKind::NotFound => {},
-            _ => return Err(e).with_context(|| "Error opening file!")
-        }
+            ErrorKind::NotFound => {}
+            _ => return Err(e).with_context(|| "Error opening file!"),
+        },
     }
 
     log::debug!("Creating a post...");
-    let post_path = dirs::home_dir()
-        .with_context(|| "Failed getting home dir path!")?
-        .join(".selfblog/post.md");
+    let post_path = home()?.join(".selfblog/post.md");
     File::create(&post_path)?;
 
     log::debug!("Creating a tmp file...");
-    let mut file = File::create(
-        dirs::home_dir().with_context(|| "Failed getting home dir path!")?
-            .join(".selfblog/.new_post.lock")
-    )?;
+    let mut file = File::create(home()?.join(".selfblog/.new_post.lock"))?;
 
     log::debug!("Writing info to tmp file...");
     let post = Post {
         title: title.to_string(),
-        description: description.to_string()
+        description: description.to_string(),
     };
     file.write(toml::to_string(&post)?.as_bytes())?;
 
@@ -122,45 +114,36 @@ pub fn new_post(title: &str, description: &str) -> Result<()> {
 
 pub fn ready() -> Result<()> {
     log::debug!("Checking if '.new_post.lock' already exists...");
-    if let Err(e) = File::open(
-            dirs::home_dir()
-            .with_context(|| "Failed getting home dir path!"
-        )?.join(".selfblog/.new_post.lock")) {
+    if let Err(e) = File::open(home()?.join(".selfblog/.new_post.lock")) {
         log::error!("Not found '.new_post.lock'!");
         log::info!("First, create your post before marking it as ready!");
-        return Err(e)?
+        return Err(e)?;
     }
 
     log::debug!("Reading lock file...");
-    let tmp = dirs::home_dir()
-        .with_context(|| "Failed getting home dir path!")?
-        .join(".selfblog/.ready.lock");
+    let tmp = home()?.join(".selfblog/.ready.lock");
 
     match File::open(&tmp) {
         Ok(_) => {
             log::error!("{:?} is exists!", &tmp);
-            return Err(NewPostError).with_context(||
+            return Err(NewPostError).with_context(|| {
                 "Lock file is exists!\n\
                 You already have post ready!"
-            )
+            });
         }
         Err(e) => match e.kind() {
-            ErrorKind::NotFound => {},
-            _ => return Err(e).with_context(|| "Error opening file!")
-        }
+            ErrorKind::NotFound => {}
+            _ => return Err(e).with_context(|| "Error opening file!"),
+        },
     }
 
     log::debug!("Creating lock file...");
     File::create(&tmp)?;
 
     log::debug!("Reading '.new_post.lock'...");
-    let lock_file: Post = toml::from_str(
-        &fs::read_to_string(
-        dirs::home_dir()
-            .with_context(|| "Failed getting home dir path!")?
-            .join(".selfblog/.new_post.lock")
-        )?
-    )?;
+    let lock_file: Post = toml::from_str(&fs::read_to_string(
+        home()?.join(".selfblog/.new_post.lock"),
+    )?)?;
 
     let date = chrono::Local::now();
     let main_title = format!(
@@ -170,11 +153,7 @@ pub fn ready() -> Result<()> {
     );
 
     log::debug!("Reading markdown from file...");
-    let markdown = fs::read_to_string(
-        dirs::home_dir()
-            .with_context(|| "Failed getting home dir path!")?
-            .join(".selfblog/post.md")
-    )?;
+    let markdown = fs::read_to_string(home()?.join(".selfblog/post.md"))?;
     let parser = Parser::new(&markdown);
     let mut html_output = String::new();
     html::push_html(&mut html_output, parser);
@@ -188,11 +167,7 @@ pub fn ready() -> Result<()> {
         .replace("[selfblog_post]", &html_output);
 
     log::debug!("Creating '.post_ready' file...");
-    File::create(
-        dirs::home_dir()
-            .with_context(|| "Failed getting home dir path!")?
-            .join(".selfblog/.post_ready")
-    )?.write(template.as_bytes())?;
+    File::create(home()?.join(".selfblog/.post_ready"))?.write(template.as_bytes())?;
 
     log::info!("Done!");
     Ok(())
@@ -200,79 +175,62 @@ pub fn ready() -> Result<()> {
 
 pub fn publish() -> Result<()> {
     log::debug!("Checking if '.ready.lock' already exists...");
-    if let Err(e) = File::open(dirs::home_dir()
-        .with_context(|| "Failed getting home dir path!")?
-        .join(".selfblog/.ready.lock")) {
+    if let Err(e) = File::open(home()?.join(".selfblog/.ready.lock")) {
         log::error!("Not found '.ready.lock'!");
         log::info!("First, mark post as ready before publishing it!");
-        return Err(e)?
+        return Err(e)?;
     }
 
     log::debug!("Reading post info...");
     let post_info: Post = toml::from_str(&fs::read_to_string(
-        dirs::home_dir()
-            .with_context(|| "Failed getting home dir path!")?
-            .join(".selfblog/.new_post.lock")
+        home()?.join(".selfblog/.new_post.lock"),
     )?)?;
 
     let website_path = ConfigFile::new()?.server.website_path;
 
-    let post_path = website_path
-        .join(
-            "posts/".to_string() + &post_info.title.split_whitespace().collect::<String>() + ".html"
-        );
+    let post_path = website_path.join(
+        "posts/".to_string() + &post_info.title.split_whitespace().collect::<String>() + ".html",
+    );
 
     log::debug!("Copying '.post_ready' to post_path...");
-    fs::copy(
-        dirs::home_dir()
-            .with_context(|| "Failed getting home dir path!")?
-            .join(".selfblog/.post_ready"),
-        &post_path
-    )?;
+    fs::copy(home()?.join(".selfblog/.post_ready"), &post_path)?;
 
     log::debug!("Editing index.html...");
     let date = chrono::Local::today();
-    let index = fs::read_to_string(&website_path.join("index.html"))?
-        .replace(
-            "<!-- [new_post_redirect] -->",
-            &*format!(
-                "<!-- [new_post_redirect] -->\n\
+    let index = fs::read_to_string(&website_path.join("index.html"))?.replace(
+        "<!-- [new_post_redirect] -->",
+        &*format!(
+            "<!-- [new_post_redirect] -->\n\
                 <a href=\"posts/{}.html\" class=\"post\">\n\
                 <p class=\"text title_text\">{}-{:>02}-{:>02}: {}</p>\n\
                 <p class=\"text title_text description_text\">{}</p>\n\
                 </a>",
-                &post_info.title.split_whitespace().collect::<String>(),
-                date.year(), date.month(), date.day(),
-                &post_info.title,
-                &post_info.description
-            )
-        );
+            &post_info.title.split_whitespace().collect::<String>(),
+            date.year(),
+            date.month(),
+            date.day(),
+            &post_info.title,
+            &post_info.description
+        ),
+    );
     let mut file = File::create(&website_path.join("index.html"))?;
     file.write(index.as_bytes())?;
 
     log::debug!("Editing post...");
-    let post = fs::read_to_string(&post_path)?
-        .replace(
-            "[selfblog_main_title]",
-            &format!(
-                "<p>{}: {}</p>",
-                format!("{}-{}-{}", date.year(), date.month(), date.day()),
-                &post_info.title
-            )
-        );
+    let post = fs::read_to_string(&post_path)?.replace(
+        "[selfblog_main_title]",
+        &format!(
+            "<p>{}: {}</p>",
+            format!("{}-{}-{}", date.year(), date.month(), date.day()),
+            &post_info.title
+        ),
+    );
     let mut file = File::create(&post_path)?;
     file.write(post.as_bytes())?;
 
     log::debug!("Cleaning...");
-    let selfblog_folder = dirs::home_dir()
-        .with_context(|| "Failed getting home dir path!")?
-        .join(".selfblog/");
-    let files = [
-        ".new_post.lock",
-        ".post_ready",
-        ".ready.lock",
-        "post.md"
-    ];
+    let selfblog_folder = home()?.join(".selfblog/");
+    let files = [".new_post.lock", ".post_ready", ".ready.lock", "post.md"];
 
     for p in files {
         fs::remove_file(selfblog_folder.join(p))?

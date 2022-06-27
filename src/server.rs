@@ -1,14 +1,14 @@
 mod config;
 
-use std::fs::File;
-use std::net::IpAddr;
+use crate::config::ConfigFile;
+use anyhow::{Context, Result};
+use daemonize::Daemonize;
+use derive_more::{Display, Error};
+use log::LevelFilter;
 use rocket::fs::FileServer;
 use rocket::{Build, Rocket};
-use daemonize::Daemonize;
-use anyhow::{Context, Result};
-use log::LevelFilter;
-use derive_more::{Error, Display};
-use crate::config::ConfigFile;
+use std::fs::File;
+use std::net::IpAddr;
 
 #[derive(Default, Debug, Display, Error)]
 struct HomeDirParseError;
@@ -17,13 +17,14 @@ pub fn rocket(server: config::Server) -> Rocket<Build> {
     let figment = rocket::Config::figment()
         .merge(("address", IpAddr::from(server.address)))
         .merge(("port", server.port));
-    rocket::custom(figment)
-        .mount("/", FileServer::from(server.website_path))
+    rocket::custom(figment).mount("/", FileServer::from(server.website_path))
 }
 
 #[tokio::main(flavor = "current_thread")]
 pub async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    env_logger::builder().filter_level(LevelFilter::Debug).try_init()?;
+    env_logger::builder()
+        .filter_level(LevelFilter::Debug)
+        .try_init()?;
 
     log::debug!("Creaing \"/tmp/selfblog.out\"...");
     let stdout = File::create("/tmp/selfblog.out")

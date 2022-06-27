@@ -1,9 +1,10 @@
 mod config;
 mod subcommands;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use log::LevelFilter;
+use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
 #[clap(
@@ -62,8 +63,12 @@ fn main() -> Result<()> {
         Subcommands::Stop => subcommands::stop()?,
         Subcommands::NewPost { title, description } => subcommands::new_post(&title, &description)?,
         Subcommands::Ready => subcommands::ready()?,
-        Subcommands::Publish => subcommands::publish()?
+        Subcommands::Publish => subcommands::publish()?,
     }
 
     Ok(())
+}
+
+pub fn home() -> Result<PathBuf> {
+    dirs::home_dir().with_context(|| "Failed getting home dir path!")
 }
