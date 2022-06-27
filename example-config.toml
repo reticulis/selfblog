@@ -5,7 +5,7 @@ title = "Simple blog!"
 author = "reticulis"
 # Set location of template path, selfblog will be
 # use it for creating a new posts
-template_path = "/home/<username>/template.html"
+template_path = "/home/<username>/selfblog/template.html"
 
 [server]
 # Set port and IP address whereby selfblog will be listening
