@@ -13,6 +13,8 @@ cd selfblog
 cargo install --path .
 ```
 
+or download latest [release](https://github.com/reticulis/selfblog/releases) and run `latest.sh`
+
 # Usage
 ```shell
 # create required files
