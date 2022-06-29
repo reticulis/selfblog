@@ -100,7 +100,7 @@ pub fn new_post(title: &str, description: &str) -> Result<()> {
         title: title.to_string(),
         description: description.to_string(),
     };
-    file.write(toml::to_string(&post)?.as_bytes())?;
+    file.write_all(toml::to_string(&post)?.as_bytes())?;
 
     log::info!(
         "\nPost created successfully!\n\
@@ -167,7 +167,7 @@ pub fn ready() -> Result<()> {
         .replace("[selfblog_post]", &html_output);
 
     log::debug!("Creating '.post_ready' file...");
-    File::create(home()?.join(".selfblog/.post_ready"))?.write(template.as_bytes())?;
+    File::create(home()?.join(".selfblog/.post_ready"))?.write_all(template.as_bytes())?;
 
     log::info!("Done!");
     Ok(())
@@ -216,7 +216,7 @@ pub fn publish() -> Result<()> {
         ),
     );
     let mut file = File::create(&website_path.join("index.html"))?;
-    file.write(index.as_bytes())?;
+    file.write_all(index.as_bytes())?;
 
     log::debug!("Editing post...");
     let post = fs::read_to_string(&post_path)?.replace(
@@ -228,7 +228,7 @@ pub fn publish() -> Result<()> {
         ),
     );
     let mut file = File::create(&post_path)?;
-    file.write(post.as_bytes())?;
+    file.write_all(post.as_bytes())?;
 
     log::debug!("Cleaning...");
     let selfblog_folder = home()?.join(".selfblog/");
