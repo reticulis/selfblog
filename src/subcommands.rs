@@ -90,7 +90,7 @@ pub fn new_post(title: &str, description: &str) -> Result<()> {
 
     log::debug!("Creating a post...");
     let posts_md_path = ConfigFile::new()?.blog.posts_md_path;
-    let count_posts = fs::read_dir(&posts_md_path)?.count();
+    let count_posts = fs::read_dir(&posts_md_path)?.count() + 1;
     let post_path = posts_md_path.join(format!("post-{count_posts}.md"));
     File::create(&post_path)?;
 
@@ -193,10 +193,10 @@ pub fn publish() -> Result<()> {
 
     let website_path = ConfigFile::new()?.server.website_path;
 
-    let count_posts = fs::read_dir(website_path.join("posts"))?.count();
+    let count_posts = fs::read_dir(website_path.join("posts"))?.count() + 1;
 
     let post_path = website_path.join(
-        format!("posts/post-{}.html", count_posts + 1)
+        format!("posts/post-{count_posts}.html")
     );
 
     log::debug!("Copying '.post_ready' to post_path...");
