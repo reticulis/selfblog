@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use derive_more::{Display, Error};
-use serde_derive::Deserialize;
+use serde::Deserialize;
 use std::fs;
 use std::path::PathBuf;
 
