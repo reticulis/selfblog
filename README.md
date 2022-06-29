@@ -13,7 +13,7 @@ cd selfblog
 cargo install --path .
 ```
 
-or download latest [release](https://github.com/reticulis/selfblog/releases) and run `latest.sh`
+or download latest [release](https://github.com/reticulis/selfblog/releases) and run `install.sh`
 
 # Usage
 ```shell
