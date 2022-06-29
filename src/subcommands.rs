@@ -154,7 +154,7 @@ pub fn ready() -> Result<()> {
 
     log::debug!("Reading markdown from file...");
     let markdown = fs::read_to_string(home()?.join(".selfblog/post.md"))?;
-    let parser = Parser::new(&markdown);
+    let parser = Parser::new_ext(&markdown, pulldown_cmark::Options::all());
     let mut html_output = String::new();
     html::push_html(&mut html_output, parser);
 
