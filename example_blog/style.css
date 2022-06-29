@@ -7,6 +7,10 @@ body {
     background: linear-gradient(0deg, rgba(0, 0, 0, 0.60), rgba(0, 0, 0, 0.60)), url("nasa_image.png");
 }
 
+a {
+    text-decoration: none;
+}
+
 .header {
     display: flex;
     width: 50%;

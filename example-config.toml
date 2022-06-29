@@ -6,10 +6,18 @@ author = "reticulis"
 # Set location of template path, selfblog will be
 # use it for creating a new posts
 template_path = "/home/<username>/selfblog/template.html"
+# Set location of markdown posts, selfblog will be
+# save posts in this
+posts_md_path = "/home/<username>/website/posts"
 
 [server]
-# Set port and IP address whereby selfblog will be listening
+# Set port and IP address whereby selfblog-server will be listening
 address = [127, 0, 0, 1]
 port = 8000
 # Set website path, selfblog-server will be working on it
 website_path = "/home/<username>/selfblog/example_blog"
+
+# Set CSS classes in specific paragraph
+[classes]
+title_text_main = "" # ex. "text title_text"
+description_text_main = "" # ex. "text title_text description_text"
