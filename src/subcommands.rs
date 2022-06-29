@@ -188,8 +188,10 @@ pub fn publish() -> Result<()> {
 
     let website_path = ConfigFile::new()?.server.website_path;
 
+    let count_posts = fs::read_dir(website_path.join("posts"))?.count();
+
     let post_path = website_path.join(
-        "posts/".to_string() + &post_info.title.split_whitespace().collect::<String>() + ".html",
+        format!("posts/post-{}.html", count_posts + 1)
     );
 
     log::debug!("Copying '.post_ready' to post_path...");
@@ -201,11 +203,11 @@ pub fn publish() -> Result<()> {
         "<!-- [new_post_redirect] -->",
         &*format!(
             "<!-- [new_post_redirect] -->\n\
-                <a href=\"posts/{}.html\" class=\"post\">\n\
+                <a href=\"posts/post-{}.html\" class=\"post\">\n\
                 <p class=\"text title_text\">{}-{:>02}-{:>02}: {}</p>\n\
                 <p class=\"text title_text description_text\">Description: {}</p>\n\
                 </a>",
-            &post_info.title.split_whitespace().collect::<String>(),
+            count_posts + 1,
             date.year(),
             date.month(),
             date.day(),
