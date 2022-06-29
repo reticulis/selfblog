@@ -8,6 +8,7 @@ use std::path::PathBuf;
 pub struct ConfigFile {
     pub blog: Blog,
     pub server: Server,
+    pub classes: Classes
 }
 
 #[derive(Default, Debug, Deserialize)]
@@ -23,6 +24,12 @@ pub struct Server {
     pub address: [u8; 4],
     pub port: u32,
     pub website_path: PathBuf,
+}
+
+#[derive(Default, Debug, Deserialize)]
+pub struct Classes {
+    pub title_text_main: String,
+    pub description_text_main: String,
 }
 
 #[derive(Default, Debug, Display, Error)]

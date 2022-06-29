@@ -191,7 +191,8 @@ pub fn publish() -> Result<()> {
         home()?.join(".selfblog/.new_post.lock"),
     )?)?;
 
-    let website_path = ConfigFile::new()?.server.website_path;
+    let config_file = ConfigFile::new()?;
+    let website_path = config_file.server.website_path;
 
     let count_posts = fs::read_dir(website_path.join("posts"))?.count() + 1;
 
@@ -204,19 +205,22 @@ pub fn publish() -> Result<()> {
 
     log::debug!("Editing index.html...");
     let date = chrono::Local::today();
+
     let index = fs::read_to_string(&website_path.join("index.html"))?.replace(
         "<!-- [new_post_redirect] -->",
         &*format!(
             "<!-- [new_post_redirect] -->\n\
-                <a href=\"posts/post-{}.html\" class=\"post\">\n\
-                <p class=\"text title_text\">{}-{:>02}-{:>02}: {}</p>\n\
-                <p class=\"text title_text description_text\">Description: {}</p>\n\
+                <a href=\"posts/post-{}.html\">\n\
+                <p class=\"{}\">{}-{:>02}-{:>02}: {}</p>\n\
+                <p class=\"{}\">Description: {}</p>\n\
                 </a>",
             count_posts,
+            config_file.classes.title_text_main,
             date.year(),
             date.month(),
             date.day(),
             &post_info.title,
+            config_file.classes.description_text_main,
             &post_info.description
         ),
     );
