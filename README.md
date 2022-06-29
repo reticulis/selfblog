@@ -16,13 +16,13 @@ cargo install --path .
 # Usage
 ```shell
 # create required files
-selfblog init
+selfblog init "/path/to/config"
 # start http server with your blog
 selfblog start
-# create a new draft post for your blog
+# create new draft post for your blog
 selfblog new_post "Hello world!" "Description!" 
 # after edit your post, just mark that for ready
 selfblog ready
-# publish your a new post!
+# publish your new post!
 selfblog publish         
 ```
