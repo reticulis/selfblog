@@ -14,7 +14,8 @@ pub struct ConfigFile {
 pub struct Blog {
     pub title: String,
     pub author: String,
-    pub template_path: String
+    pub template_path: PathBuf,
+    pub posts_md_path: PathBuf,
 }
 
 #[derive(Default, Debug, Deserialize)]

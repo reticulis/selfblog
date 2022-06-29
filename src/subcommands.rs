@@ -89,8 +89,13 @@ pub fn new_post(title: &str, description: &str) -> Result<()> {
     }
 
     log::debug!("Creating a post...");
-    let post_path = home()?.join(".selfblog/post.md");
+    let posts_md_path = ConfigFile::new()?.blog.posts_md_path;
+    let count_posts = fs::read_dir(&posts_md_path)?.count();
+    let post_path = posts_md_path.join(format!("post-{count_posts}.md"));
     File::create(&post_path)?;
+
+    log::debug!("Creating a hard link...");
+    fs::hard_link(&post_path, home()?.join(".selfblog/.last_post"))?;
 
     log::debug!("Creating a tmp file...");
     let mut file = File::create(home()?.join(".selfblog/.new_post.lock"))?;
@@ -153,7 +158,7 @@ pub fn ready() -> Result<()> {
     );
 
     log::debug!("Reading markdown from file...");
-    let markdown = fs::read_to_string(home()?.join(".selfblog/post.md"))?;
+    let markdown = fs::read_to_string(home()?.join(".selfblog/.last_post"))?;
     let parser = Parser::new_ext(&markdown, pulldown_cmark::Options::all());
     let mut html_output = String::new();
     html::push_html(&mut html_output, parser);
@@ -232,7 +237,7 @@ pub fn publish() -> Result<()> {
 
     log::debug!("Cleaning...");
     let selfblog_folder = home()?.join(".selfblog/");
-    let files = [".new_post.lock", ".post_ready", ".ready.lock", "post.md"];
+    let files = [".new_post.lock", ".post_ready", ".ready.lock", ".last_post"];
 
     for p in files {
         fs::remove_file(selfblog_folder.join(p))?
