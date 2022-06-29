@@ -212,7 +212,7 @@ pub fn publish() -> Result<()> {
                 <p class=\"text title_text\">{}-{:>02}-{:>02}: {}</p>\n\
                 <p class=\"text title_text description_text\">Description: {}</p>\n\
                 </a>",
-            count_posts + 1,
+            count_posts,
             date.year(),
             date.month(),
             date.day(),
