@@ -47,9 +47,9 @@ pub fn stop() -> Result<()> {
     log::debug!("Reading \"/tmp/selfblog-daemon.pid\"...");
     let pid = match fs::read_to_string("/tmp/selfblog-daemon.pid") {
         Ok(f) => f,
-        Err(e) => match e.kind() {
-            ErrorKind::NotFound => return Err(e).with_context(|| "Not found running server!"),
-            _ => return Err(Error::from(e)),
+        Err(e) => return match e.kind() {
+            ErrorKind::NotFound => Err(e).with_context(|| "Not found running server!"),
+            _ => Err(Error::from(e)),
         },
     };
 
@@ -147,8 +147,8 @@ pub fn ready() -> Result<()> {
 
     let date = chrono::Local::now();
     let main_title = format!(
-        "<p>{}: {}</p>",
-        format!("{}-{:>02}-{:>02}", date.year(), date.month(), date.day()),
+        "<p>{}-{:>02}-{:>02}: {}</p>",
+        date.year(), date.month(), date.day(),
         &lock_file.title
     );
 
@@ -222,10 +222,10 @@ pub fn publish() -> Result<()> {
     let post = fs::read_to_string(&post_path)?.replace(
         "[selfblog_main_title]",
         &format!(
-            "<p>{}: {}</p>",
-            format!("{}-{}-{}", date.year(), date.month(), date.day()),
+            "<p>{}-{:>02}-{:>02}: {}</p>",
+            date.year(), date.month(), date.day(),
             &post_info.title
-        ),
+        )
     );
     let mut file = File::create(&post_path)?;
     file.write_all(post.as_bytes())?;
