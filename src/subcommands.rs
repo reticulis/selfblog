@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::fs::File;
 use std::io::{ErrorKind, Write};
+use std::path::PathBuf;
 
 #[derive(Default, Debug, Error, Display)]
 struct NewPostError;
@@ -64,11 +65,99 @@ pub fn stop() -> Result<()> {
 
 #[derive(Serialize, Deserialize)]
 struct Post {
+    template_path: PathBuf,
+    post_path: PathBuf,
+    post_info_path: PathBuf,
+    posts_md_path: PathBuf
+}
+
+#[derive(Serialize, Deserialize, Default)]
+struct PostInfo {
     title: String,
     description: String,
 }
 
-pub fn new_post(title: &str, description: &str) -> Result<()> {
+impl Post {
+    pub fn new(post_id: usize) -> Result<Self> {
+        let config = ConfigFile::new()?;
+        let posts_md_path = config.blog.posts_md_path.clone();
+        let post_info_path = home()?.join(format!(".selfblog/.post-{post_id}"));
+
+        Ok(Self {
+            template_path: config.blog.template_path,
+            post_path: posts_md_path.join(format!("post-{post_id}.md")),
+            post_info_path,
+            posts_md_path,
+        })
+    }
+
+    pub fn read_info(&mut self) -> Result<PostInfo> {
+        Ok(toml::from_str(&fs::read_to_string(&self.post_info_path)?)?)
+    }
+
+    fn count_posts() -> Result<usize> {
+        Ok(fs::read_dir(ConfigFile::new()?.blog.posts_md_path)?.count() / 2)
+    }
+
+    pub fn create(&self, title: String, description: String) -> Result<()> {
+        File::create(&self.post_path)?;
+        fs::hard_link(&self.post_path, home()?.join(".selfblog/.last_post"))?;
+
+        let mut post_info = File::create(&self.post_info_path)?;
+        post_info.write_all(toml::to_string(&PostInfo { title, description })?.as_bytes())?;
+        fs::hard_link(&self.post_info_path, home()?.join(".selfblog/.new_post.lock"))?;
+
+        Ok(())
+    }
+
+    pub fn ready(&mut self) -> Result<()> {
+        let final_output = self.connect_md_with_template()?;
+        let mut post_ready = File::create(home()?.join(".selfblog/.post_ready"))?;
+        post_ready.write_all(final_output.as_bytes())?;
+
+        Ok(())
+    }
+
+    pub fn update(&mut self) -> Result<()> {
+        let final_output = self.connect_md_with_template()?;
+        let mut post_ready = File::create(home()?.join(".selfblog/.post_ready"))?;
+        post_ready.write_all(final_output.as_bytes())?;
+
+        let mut new_post = File::create(home()?.join(".selfblog/.new_post.lock"))?;
+        new_post.write_all(toml::to_string(&self.read_info()?)?.as_bytes())?;
+
+        Ok(())
+    }
+
+    fn connect_md_with_template(&mut self) -> Result<String> {
+        let markdown = fs::read_to_string(&self.post_path)?;
+        let html_output = Post::md_to_html(&markdown);
+        let template = fs::read_to_string(&self.template_path)?;
+
+        Ok(self.add_html_to_template(&template, &html_output)?)
+    }
+
+    fn add_html_to_template(&mut self, template: &str, html: &str) -> Result<String> {
+        let date = chrono::Local::now();
+        let main_title = format!(
+            "<p>{}-{:>02}-{:>02}: {}</p>",
+            date.year(), date.month(), date.day(),
+            &self.read_info()?.title
+        );
+
+        Ok(template.replace("[selfblog_main_title]", &main_title)
+            .replace("[selfblog_post]", &html))
+    }
+
+    fn md_to_html(markdown: &str) -> String {
+        let parser = Parser::new_ext(markdown, pulldown_cmark::Options::all());
+        let mut html_output = String::new();
+        html::push_html(&mut html_output, parser);
+        html_output
+    }
+}
+
+pub fn new_post(title: String, description: String) -> Result<()> {
     log::info!("Creating a new draft post...");
 
     log::debug!("Trying open a tmp file...");
@@ -88,30 +177,15 @@ pub fn new_post(title: &str, description: &str) -> Result<()> {
         },
     }
 
-    log::debug!("Creating a post...");
-    let posts_md_path = ConfigFile::new()?.blog.posts_md_path;
-    let count_posts = fs::read_dir(&posts_md_path)?.count() + 1;
-    let post_path = posts_md_path.join(format!("post-{count_posts}.md"));
-    File::create(&post_path)?;
-
-    log::debug!("Creating a hard link...");
-    fs::hard_link(&post_path, home()?.join(".selfblog/.last_post"))?;
-
-    log::debug!("Creating a tmp file...");
-    let mut file = File::create(home()?.join(".selfblog/.new_post.lock"))?;
-
-    log::debug!("Writing info to tmp file...");
-    let post = Post {
-        title: title.to_string(),
-        description: description.to_string(),
-    };
-    file.write_all(toml::to_string(&post)?.as_bytes())?;
+    let count_posts = Post::count_posts()? + 1;
+    let post = Post::new(count_posts)?;
+    post.create(title, description)?;
 
     log::info!(
         "\nPost created successfully!\n\
         Now, edit your a new post and mark as ready to publish!\n\
         File post location: {:?}",
-        &post_path
+        &post.post_path
     );
 
     Ok(())
@@ -137,42 +211,16 @@ pub fn ready() -> Result<()> {
             });
         }
         Err(e) => match e.kind() {
-            ErrorKind::NotFound => {}
+            ErrorKind::NotFound => {
+                log::debug!("Creating lock file...");
+                File::create(&tmp)?;
+            }
             _ => return Err(e).with_context(|| "Error opening file!"),
         },
     }
 
-    log::debug!("Creating lock file...");
-    File::create(&tmp)?;
-
-    log::debug!("Reading '.new_post.lock'...");
-    let lock_file: Post = toml::from_str(&fs::read_to_string(
-        home()?.join(".selfblog/.new_post.lock"),
-    )?)?;
-
-    let date = chrono::Local::now();
-    let main_title = format!(
-        "<p>{}-{:>02}-{:>02}: {}</p>",
-        date.year(), date.month(), date.day(),
-        &lock_file.title
-    );
-
-    log::debug!("Reading markdown from file...");
-    let markdown = fs::read_to_string(home()?.join(".selfblog/.last_post"))?;
-    let parser = Parser::new_ext(&markdown, pulldown_cmark::Options::all());
-    let mut html_output = String::new();
-    html::push_html(&mut html_output, parser);
-
-    log::debug!("Reading configuration file...");
-    let template_path = ConfigFile::new()?.blog.template_path;
-
-    log::debug!("Reading template file...");
-    let template = fs::read_to_string(&template_path)?
-        .replace("[selfblog_main_title]", &main_title)
-        .replace("[selfblog_post]", &html_output);
-
-    log::debug!("Creating '.post_ready' file...");
-    File::create(home()?.join(".selfblog/.post_ready"))?.write_all(template.as_bytes())?;
+    let mut post = Post::new(Post::count_posts()?)?;
+    post.ready()?;
 
     log::info!("Done!");
     Ok(())
@@ -187,14 +235,14 @@ pub fn publish() -> Result<()> {
     }
 
     log::debug!("Reading post info...");
-    let post_info: Post = toml::from_str(&fs::read_to_string(
+    let post_info: PostInfo = toml::from_str(&fs::read_to_string(
         home()?.join(".selfblog/.new_post.lock"),
     )?)?;
 
     let config_file = ConfigFile::new()?;
     let website_path = config_file.server.website_path;
 
-    let count_posts = fs::read_dir(website_path.join("posts"))?.count() + 1;
+    let count_posts = Post::count_posts()? + 1;
 
     let post_path = website_path.join(
         format!("posts/post-{count_posts}.html")
@@ -248,6 +296,13 @@ pub fn publish() -> Result<()> {
     }
 
     log::info!("Your post are published!");
+
+    Ok(())
+}
+
+pub fn update(post_id: usize) -> Result<()> {
+    let mut post = Post::new(post_id)?;
+    post.update()?;
 
     Ok(())
 }

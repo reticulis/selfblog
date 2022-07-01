@@ -34,6 +34,8 @@ enum Subcommands {
     Ready,
     /// Publish your post to blog
     Publish,
+    /// Update your post
+    Update { post_id: usize }
 }
 
 fn main() -> Result<()> {
@@ -61,9 +63,10 @@ fn main() -> Result<()> {
         Subcommands::Init { config } => subcommands::init(&config)?,
         Subcommands::Start => subcommands::start()?,
         Subcommands::Stop => subcommands::stop()?,
-        Subcommands::NewPost { title, description } => subcommands::new_post(&title, &description)?,
+        Subcommands::NewPost { title, description } => subcommands::new_post(title, description)?,
         Subcommands::Ready => subcommands::ready()?,
         Subcommands::Publish => subcommands::publish()?,
+        Subcommands::Update { post_id } => subcommands::update(post_id)?
     }
 
     Ok(())
