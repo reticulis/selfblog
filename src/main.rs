@@ -1,5 +1,6 @@
 mod config;
 mod subcommands;
+mod post;
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
@@ -35,7 +36,7 @@ enum Subcommands {
     /// Publish your post to blog
     Publish,
     /// Update your post
-    Update { post_id: usize }
+    Update { post_id: usize },
 }
 
 fn main() -> Result<()> {
@@ -66,7 +67,7 @@ fn main() -> Result<()> {
         Subcommands::NewPost { title, description } => subcommands::new_post(title, description)?,
         Subcommands::Ready => subcommands::ready()?,
         Subcommands::Publish => subcommands::publish()?,
-        Subcommands::Update { post_id } => subcommands::update(post_id)?
+        Subcommands::Update { post_id } => subcommands::update(post_id)?,
     }
 
     Ok(())
