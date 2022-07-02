@@ -99,7 +99,7 @@ impl Post {
 
         let index = fs::read_to_string(&website_path.join("index.html"))?.replace(
             "<!-- [new_post_redirect] -->",
-            &*format!(
+            &format!(
                 "<!-- [new_post_redirect] -->\n\
                 <a href=\"posts/post-{}.html\">\n\
                 <p class=\"{}\">{}-{:>02}-{:>02}: {}</p>\n\
@@ -131,6 +131,34 @@ impl Post {
         );
         let mut file = File::create(&post_path)?;
         file.write_all(post.as_bytes())?;
+
+        Ok(())
+    }
+
+    pub fn delete(&self) -> Result<()> {
+        let website_path = &self.config.server.website_path;
+        let index_path = website_path.join("index.html");
+        log::debug!("Removing html post file...");
+        fs::remove_file(website_path.join(format!("posts/post-{}.html", self.post_id)))?;
+        log::debug!("Reading index.html...");
+        let index = fs::read_to_string(&index_path)?;
+
+        let mut skip = 0;
+
+        let index = index.lines().filter(|&s| {
+            if s.trim_start().starts_with(&format!("<a title=\"post-{}", self.post_id)) {
+                skip = 3;
+                false
+            } else if skip != 0 {
+                skip -= 1;
+                false
+            } else {
+                true
+            }
+        }).collect::<Vec<&str>>().join("\n");
+
+        log::debug!("Replacing index.html...");
+        File::create(&index_path)?.write_all(index.as_bytes())?;
 
         Ok(())
     }

@@ -37,6 +37,8 @@ enum Subcommands {
     Publish,
     /// Update your post
     Update { post_id: usize },
+    /// Delete post
+    Delete { post_id: usize }
 }
 
 fn main() -> Result<()> {
@@ -68,6 +70,7 @@ fn main() -> Result<()> {
         Subcommands::Ready => subcommands::ready()?,
         Subcommands::Publish => subcommands::publish()?,
         Subcommands::Update { post_id } => subcommands::update(post_id)?,
+        Subcommands::Delete { post_id } => subcommands::delete(post_id)?,
     }
 
     Ok(())

@@ -161,3 +161,13 @@ pub fn update(post_id: usize) -> Result<()> {
 
     Ok(())
 }
+
+pub fn delete(post_id: usize) -> Result<()> {
+    log::info!("Deleting post...");
+    let post = Post::new(post_id)?;
+    post.delete()?;
+
+    log::info!("Done!");
+
+    Ok(())
+}
