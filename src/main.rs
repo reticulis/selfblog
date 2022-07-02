@@ -10,7 +10,7 @@ use std::path::PathBuf;
 #[derive(Parser, Debug)]
 #[clap(
     author = "reticulis <reticulis@protonmail.com>",
-    version = "0.4.0",
+    version = "0.5.0",
     about = "Create your own simple blog!"
 )]
 struct Cli {
