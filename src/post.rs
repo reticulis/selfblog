@@ -101,10 +101,11 @@ impl Post {
             "<!-- [new_post_redirect] -->",
             &format!(
                 "<!-- [new_post_redirect] -->\n\
-                <a href=\"posts/post-{}.html\">\n\
+                <a title=\"post-{}\" href=\"posts/post-{}.html\">\n\
                 <p class=\"{}\">{}-{:>02}-{:>02}: {}</p>\n\
                 <p class=\"{}\">Description: {}</p>\n\
                 </a>",
+                &self.post_id,
                 &self.post_id,
                 &self.config.classes.title_text_main,
                 date.year(),
