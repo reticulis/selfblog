@@ -21,7 +21,7 @@ anyhow = "1.0.58"
 daemonize = "0.4.1"
 rocket = "0.5.0-rc.2"
 tokio = "1.19.2"
-serde = { version = "1.0.137", features = ["derive"] }
+serde = { version = "1.0.138", features = ["derive"] }
 dirs = "4.0.0"
 toml = "0.5.9"
 derive_more = { version = "0.99.17", features = ["error", "display"] }
