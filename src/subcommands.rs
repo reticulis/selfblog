@@ -1,11 +1,11 @@
 use crate::config::ConfigFile;
+use crate::post::Post;
 use crate::{home, Start};
 use anyhow::{Context, Result};
 use derive_more::{Display, Error};
 use std::fs;
 use std::fs::File;
 use std::io::ErrorKind;
-use crate::post::Post;
 
 #[derive(Default, Debug, Error, Display)]
 struct NewPostError;
@@ -63,13 +63,11 @@ pub fn stop() -> Result<()> {
         Ok(f) => {
             log::info!("Stopping server...");
             std::process::Command::new("kill").arg(f).spawn()?;
-        },
-        Err(e) => {
-            match e.kind() {
-                ErrorKind::NotFound => log::error!("Not found running Gemini server!"),
-                _ => return Err(e)?,
-            }
         }
+        Err(e) => match e.kind() {
+            ErrorKind::NotFound => log::error!("Not found running Gemini server!"),
+            _ => return Err(e)?,
+        },
     };
 
     log::debug!("Reading \"/tmp/selfblog-www.pid\"...");
@@ -77,13 +75,11 @@ pub fn stop() -> Result<()> {
         Ok(f) => {
             log::info!("Stopping server...");
             std::process::Command::new("kill").arg(f).spawn()?;
-        },
-        Err(e) => {
-            match e.kind() {
-                ErrorKind::NotFound => log::error!("Not found running WWW server!"),
-                _ => return Err(e)?,
-            }
         }
+        Err(e) => match e.kind() {
+            ErrorKind::NotFound => log::error!("Not found running WWW server!"),
+            _ => return Err(e)?,
+        },
     };
 
     log::debug!("Removing \"/tmp/selfblog-www.pid\" and \"/tmp/selfblog-gemini.pid\"...");

@@ -1,13 +1,13 @@
+use crate::config::ConfigFile;
+use crate::home;
+use anyhow::Result;
+use chrono::Datelike;
+use pulldown_cmark::{html, Parser};
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
-use serde::{Serialize, Deserialize};
-use crate::config::ConfigFile;
-use anyhow::Result;
-use chrono::Datelike;
-use pulldown_cmark::{html, Parser};
-use crate::home;
 
 #[derive(Serialize, Deserialize)]
 pub struct Post {
@@ -73,8 +73,11 @@ impl Post {
         let final_output = self.connect_md_with_template()?;
         log::debug!("Creating \".post_ready\" file...");
         let mut post_ready = File::create(
-            &self.config.server.website_path
-                .join(format!("posts/post-{}.html", &self.post_id))
+            &self
+                .config
+                .server
+                .website_path
+                .join(format!("posts/post-{}.html", &self.post_id)),
         )?;
         post_ready.write_all(final_output.as_bytes())?;
 
@@ -146,17 +149,23 @@ impl Post {
 
         let mut skip = 0;
 
-        let index = index.lines().filter(|&s| {
-            if s.trim_start().starts_with(&format!("<a title=\"post-{}", self.post_id)) {
-                skip = 3;
-                false
-            } else if skip != 0 {
-                skip -= 1;
-                false
-            } else {
-                true
-            }
-        }).collect::<Vec<&str>>().join("\n");
+        let index = index
+            .lines()
+            .filter(|&s| {
+                if s.trim_start()
+                    .starts_with(&format!("<a title=\"post-{}", self.post_id))
+                {
+                    skip = 3;
+                    false
+                } else if skip != 0 {
+                    skip -= 1;
+                    false
+                } else {
+                    true
+                }
+            })
+            .collect::<Vec<&str>>()
+            .join("\n");
 
         log::debug!("Replacing index.html...");
         File::create(&index_path)?.write_all(index.as_bytes())?;

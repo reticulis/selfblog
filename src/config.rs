@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use derive_more::{Display, Error};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 
@@ -37,6 +37,7 @@ pub struct Classes {
 pub struct Gemini {
     pub address: [u8; 4],
     pub port: u16,
+    pub posts_path: PathBuf,
     pub certs_path: PathBuf,
 }
 

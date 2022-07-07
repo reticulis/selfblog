@@ -1,6 +1,6 @@
 mod config;
-mod subcommands;
 mod post;
+mod subcommands;
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
@@ -39,7 +39,7 @@ enum Subcommands {
     /// Update your post
     Update { post_id: usize },
     /// Delete post
-    Delete { post_id: usize }
+    Delete { post_id: usize },
 }
 
 #[derive(Debug, Subcommand)]

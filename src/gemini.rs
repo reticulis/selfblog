@@ -1,15 +1,15 @@
 mod config;
 
-use std::fs::File;
-use std::net::Ipv4Addr;
-use anyhow::{Result, Context};
+use crate::config::ConfigFile;
+use anyhow::{Context, Result};
 use daemonize::Daemonize;
-use log::LevelFilter;
-use twinstar::{Request, Response, Server};
 use futures_core::future::BoxFuture;
 use futures_util::FutureExt;
 use lazy_static::lazy_static;
-use crate::config::ConfigFile;
+use log::LevelFilter;
+use std::fs::File;
+use std::net::Ipv4Addr;
+use twinstar::{Request, Response, ResponseHeader, Server};
 
 lazy_static! {
     static ref CONFIG: ConfigFile = ConfigFile::new().unwrap();
@@ -57,10 +57,16 @@ fn main() -> Result<()> {
 
 fn handle_request(request: Request) -> BoxFuture<'static, Result<Response>> {
     async move {
+        if request.uri().path() == "/" {
+            let path = &CONFIG.gemini.posts_path.join("index.gmi");
+            let mime = twinstar::util::guess_mime_from_path(path);
+            let response = twinstar::util::serve_file(path, &mime).await?;
+            return Ok(response);
+        }
         let path = request.path_segments();
-        let response = twinstar::util::serve_dir(&CONFIG.blog.posts_md_path, &path).await?;
+        let response = twinstar::util::serve_dir(&CONFIG.gemini.posts_path, &path).await?;
 
         Ok(response)
     }
-        .boxed()
+    .boxed()
 }
