@@ -35,12 +35,12 @@ pub async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         .with_context(|| "Failed creating \"/tmp/selfblog.err\"")?;
 
     let daemonize = Daemonize::new()
-        .pid_file("/tmp/selfblog-daemon.pid")
+        .pid_file("/tmp/selfblog-www.pid")
         .stdout(stdout)
         .stderr(stderr);
 
     log::debug!("Starting daemon...");
-    let _ = match daemonize.start() {
+    match daemonize.start() {
         Ok(_) => {
             log::debug!("Reading configuration file...");
             let config = ConfigFile::new()?;

@@ -9,6 +9,12 @@ version = "0.1.0"
 edition = "2021"
 path = "src/server.rs"
 
+[[bin]]
+name = "selfblog-gemini"
+version = "0.0.0"
+edition = "2021"
+path = "src/gemini.rs"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
@@ -25,3 +31,12 @@ serde = { version = "1.0.138", features = ["derive"] }
 dirs = "4.0.0"
 toml = "0.5.9"
 derive_more = { version = "0.99.17", features = ["error", "display"] }
+twinstar = { git = "https://github.com/panicbit/twinstar.git" }
+futures-core = "0.3.21"
+futures-util = "0.3.21"
+lazy_static = "1.4.0"
+
+# For twinstar
+[dependencies.old_tokio]
+package = "tokio"
+version = "0.3.7"

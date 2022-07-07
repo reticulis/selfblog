@@ -26,7 +26,8 @@ enum Subcommands {
     /// Create required files
     Init { config: String },
     /// Start HTTP server
-    Start,
+    #[clap(subcommand)]
+    Start(Start),
     /// Stop HTTP server
     Stop,
     /// Create a new draft post
@@ -39,6 +40,13 @@ enum Subcommands {
     Update { post_id: usize },
     /// Delete post
     Delete { post_id: usize }
+}
+
+#[derive(Debug, Subcommand)]
+pub enum Start {
+    Gemini,
+    Www,
+    All,
 }
 
 fn main() -> Result<()> {
@@ -64,7 +72,7 @@ fn main() -> Result<()> {
 
     match args.command {
         Subcommands::Init { config } => subcommands::init(&config)?,
-        Subcommands::Start => subcommands::start()?,
+        Subcommands::Start(option) => subcommands::start(option)?,
         Subcommands::Stop => subcommands::stop()?,
         Subcommands::NewPost { title, description } => subcommands::new_post(title, description)?,
         Subcommands::Ready => subcommands::ready()?,

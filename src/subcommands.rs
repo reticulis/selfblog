@@ -1,6 +1,6 @@
 use crate::config::ConfigFile;
-use crate::home;
-use anyhow::{Context, Error, Result};
+use crate::{home, Start};
+use anyhow::{Context, Result};
 use derive_more::{Display, Error};
 use std::fs;
 use std::fs::File;
@@ -35,29 +35,60 @@ pub fn init(config: &str) -> Result<()> {
     Ok(())
 }
 
-pub fn start() -> Result<()> {
-    log::info!("HTTP server initialization...");
-    std::process::Command::new("selfblog-server").spawn()?;
+pub fn start(option: Start) -> Result<()> {
+    let mut www = std::process::Command::new("selfblog-server");
+    let mut gemini = std::process::Command::new("selfblog-gemini");
+    match option {
+        Start::Www => {
+            log::info!("HTTP server initialization...");
+            www.spawn()?;
+        }
+        Start::Gemini => {
+            log::info!("Gemini server initialization...");
+            gemini.spawn()?;
+        }
+        Start::All => {
+            log::info!("Starting all servers...");
+            www.spawn()?;
+            gemini.spawn()?;
+        }
+    }
+
     Ok(())
 }
 
 pub fn stop() -> Result<()> {
-    log::debug!("Reading \"/tmp/selfblog-daemon.pid\"...");
-    let pid = match fs::read_to_string("/tmp/selfblog-daemon.pid") {
-        Ok(f) => f,
+    log::debug!("Reading \"/tmp/selfblog-gemini.pid\"...");
+    match fs::read_to_string("/tmp/selfblog-gemini.pid") {
+        Ok(f) => {
+            log::info!("Stopping server...");
+            std::process::Command::new("kill").arg(f).spawn()?;
+        },
         Err(e) => {
-            return match e.kind() {
-                ErrorKind::NotFound => Err(e).with_context(|| "Not found running server!"),
-                _ => Err(Error::from(e)),
+            match e.kind() {
+                ErrorKind::NotFound => log::error!("Not found running Gemini server!"),
+                _ => return Err(e)?,
             }
         }
     };
 
-    log::info!("Stoping server...");
-    std::process::Command::new("kill").arg(pid).spawn()?;
+    log::debug!("Reading \"/tmp/selfblog-www.pid\"...");
+    match fs::read_to_string("/tmp/selfblog-daemon.pid") {
+        Ok(f) => {
+            log::info!("Stopping server...");
+            std::process::Command::new("kill").arg(f).spawn()?;
+        },
+        Err(e) => {
+            match e.kind() {
+                ErrorKind::NotFound => log::error!("Not found running WWW server!"),
+                _ => return Err(e)?,
+            }
+        }
+    };
 
-    log::debug!("Removing \"/tmp/selfblog-daemon.pid\"...");
-    fs::remove_file("/tmp/selfblog-daemon.pid")?;
+    log::debug!("Removing \"/tmp/selfblog-www.pid\" and \"/tmp/selfblog-gemini.pid\"...");
+    fs::remove_file("/tmp/selfblog-www.pid")?;
+    fs::remove_file("/tmp/selfblog-gemini.pid")?;
 
     Ok(())
 }

@@ -9,6 +9,7 @@ pub struct ConfigFile {
     pub blog: Blog,
     pub server: Server,
     pub classes: Classes,
+    pub gemini: Gemini,
 }
 
 #[derive(Default, Debug, Serialize, Deserialize)]
@@ -30,6 +31,13 @@ pub struct Server {
 pub struct Classes {
     pub title_text_main: String,
     pub description_text_main: String,
+}
+
+#[derive(Default, Debug, Serialize, Deserialize)]
+pub struct Gemini {
+    pub address: [u8; 4],
+    pub port: u16,
+    pub certs_path: PathBuf,
 }
 
 #[derive(Default, Debug, Display, Error)]
