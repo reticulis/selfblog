@@ -58,33 +58,22 @@ pub fn start(option: Start) -> Result<()> {
 }
 
 pub fn stop() -> Result<()> {
-    log::debug!("Reading \"/tmp/selfblog-gemini.pid\"...");
-    match fs::read_to_string("/tmp/selfblog-gemini.pid") {
-        Ok(f) => {
-            log::info!("Stopping server...");
-            std::process::Command::new("kill").arg(f).spawn()?;
-        }
-        Err(e) => match e.kind() {
-            ErrorKind::NotFound => log::error!("Not found running Gemini server!"),
-            _ => return Err(e)?,
-        },
-    };
-
-    log::debug!("Reading \"/tmp/selfblog-www.pid\"...");
-    match fs::read_to_string("/tmp/selfblog-daemon.pid") {
-        Ok(f) => {
-            log::info!("Stopping server...");
-            std::process::Command::new("kill").arg(f).spawn()?;
-        }
-        Err(e) => match e.kind() {
-            ErrorKind::NotFound => log::error!("Not found running WWW server!"),
-            _ => return Err(e)?,
-        },
-    };
-
-    log::debug!("Removing \"/tmp/selfblog-www.pid\" and \"/tmp/selfblog-gemini.pid\"...");
-    fs::remove_file("/tmp/selfblog-www.pid")?;
-    fs::remove_file("/tmp/selfblog-gemini.pid")?;
+    let files = ["/tmp/selfblog-gemini.pid", "/tmp/selfblog-www.pid"];
+    for file in files {
+        log::debug!("Reading \"{file}\"...");
+        match fs::read_to_string(file) {
+            Ok(f) => {
+                log::info!("({file}) Stopping server...");
+                std::process::Command::new("kill").arg(f).spawn()?;
+                fs::remove_file(file)
+                    .with_context(|| "Not found \"{file}\"")?;
+            }
+            Err(e) => match e.kind() {
+                ErrorKind::NotFound => log::debug!("({file}) Not found running server! Ignore..."),
+                _ => return Err(e)?,
+            },
+        };
+    }
 
     Ok(())
 }

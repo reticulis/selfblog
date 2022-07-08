@@ -9,7 +9,7 @@ use lazy_static::lazy_static;
 use log::LevelFilter;
 use std::fs::File;
 use std::net::Ipv4Addr;
-use twinstar::{Request, Response, ResponseHeader, Server};
+use twinstar::{Request, Response, Server};
 
 lazy_static! {
     static ref CONFIG: ConfigFile = ConfigFile::new().unwrap();
