@@ -1,89 +1,61 @@
-mod config;
-mod post;
-mod subcommands;
+use std::error::Error;
+use std::fs::File;
+use std::io::BufReader;
+use actix_web::{get, App, HttpResponse, HttpServer, Responder};
+use actix_web::http::header::ContentType;
+use anyhow::Result;
+use rustls::{Certificate, PrivateKey, ServerConfig};
+use rustls_pemfile::{certs, pkcs8_private_keys};
 
-use anyhow::{Context, Result};
-use clap::{Parser, Subcommand};
-use log::LevelFilter;
-use std::path::PathBuf;
-
-#[derive(Parser, Debug)]
-#[clap(
-    author = "reticulis <reticulis@protonmail.com>",
-    version = "0.5.1",
-    about = "Create your own simple blog!"
-)]
-struct Cli {
-    #[clap(subcommand)]
-    command: Subcommands,
-
-    #[clap(short, long, default_value_t = 1)]
-    debug: u8,
+#[get("/")]
+async fn home_page() -> impl Responder {
+    HttpResponse::Ok().content_type(ContentType::html()).body(
+        "<h1>Hello world!</h1>"
+    )
 }
 
-#[derive(Debug, Subcommand)]
-enum Subcommands {
-    /// Create required files
-    Init { config: String },
-    /// Start HTTP server
-    #[clap(subcommand)]
-    Start(Start),
-    /// Stop HTTP server
-    Stop,
-    /// Create a new draft post
-    NewPost { title: String, description: String },
-    /// Check and mark the post as ready to publish
-    Ready,
-    /// Publish your post to blog
-    Publish,
-    /// Update your post
-    Update { post_id: usize },
-    /// Delete post
-    Delete { post_id: usize },
-}
+#[tokio::main]
+async fn main() -> Result<()> {
+    let config = load_rustls()?;
 
-#[derive(Debug, Subcommand)]
-pub enum Start {
-    Gemini,
-    Www,
-    All,
-}
-
-fn main() -> Result<()> {
-    let mut builder = env_logger::builder();
-
-    let args = Cli::parse();
-
-    match args.debug {
-        0 => builder.filter_level(LevelFilter::Off).try_init()?,
-        1 => {
-            builder.filter_level(LevelFilter::Info).try_init()?;
-            log::info!("Debug mode is in info only!");
-        }
-        2 => {
-            builder.filter_level(LevelFilter::Debug).try_init()?;
-            log::debug!("Debug mode is on!");
-        }
-        _ => {
-            eprintln!("Invalid Debug mode level!");
-            std::process::exit(1)
-        }
-    }
-
-    match args.command {
-        Subcommands::Init { config } => subcommands::init(&config)?,
-        Subcommands::Start(option) => subcommands::start(option)?,
-        Subcommands::Stop => subcommands::stop()?,
-        Subcommands::NewPost { title, description } => subcommands::new_post(title, description)?,
-        Subcommands::Ready => subcommands::ready()?,
-        Subcommands::Publish => subcommands::publish()?,
-        Subcommands::Update { post_id } => subcommands::update(post_id)?,
-        Subcommands::Delete { post_id } => subcommands::delete(post_id)?,
-    }
+    HttpServer::new(|| {
+        App::new()
+            .service(welcome)
+    })
+        .bind_rustls("127.0.0.1:8443", config)?
+        .run()
+        .await?;
 
     Ok(())
 }
 
-pub fn home() -> Result<PathBuf> {
-    dirs::home_dir().with_context(|| "Failed getting home dir path!")
+fn load_rustls() -> Result<ServerConfig> {
+    let config = ServerConfig::builder()
+        .with_safe_defaults()
+        .with_no_client_auth();
+
+    let mut cert = load_cert()?;
+
+    let cert_chain = certs(&mut cert.0)?
+        .into_iter()
+        .map(Certificate)
+        .collect();
+
+    let mut keys: Vec<PrivateKey> = pkcs8_private_keys(&mut cert.1)?
+        .into_iter()
+        .map(PrivateKey)
+        .collect();
+
+    if keys.is_empty() {
+        return Err(anyhow::Error::msg("Could not locate PKCS 8 private keys."))
+    }
+
+    Ok(config.with_single_cert(cert_chain, keys.remove(0))?)
+}
+
+fn load_cert() -> Result<(BufReader<File>, BufReader<File>)> {
+    let cert_file = BufReader::new(File::open("cert.pem")?);
+    let key_file = BufReader::new(File::open("key.pem")?);
+
+    Ok((cert_file, key_file))
 }
