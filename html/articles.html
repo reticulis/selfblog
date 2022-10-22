@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="description" content="Selfblog!">
+    <meta property="og:title" content=""> <!-- TODO -->
+    <meta property="og:image" content=""> <!-- TODO -->
+    <meta property="og:description" content=""> <!-- TODO -->
+    <link rel="icon" href="" type="image/x-icon"> <!-- TODO -->
+    <title>Selfblog</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+    <nav class="navbar">
+        <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="about">About</a></li>
+            <li><a href="contact">Contact</a></li>
+        </ul>
+    </nav>
+</header>
+<% for article in articles { %>
+<a href="<%= article.1.path %>">
+    <h1><%= article.1.title %></h1>
+    <p><%= article.1.description %></p>
+</a>
+<% } %>
+</body>
+</html>

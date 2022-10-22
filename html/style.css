@@ -1,0 +1,54 @@
+@font-face {
+    font-family: Ubuntu-Regular;
+    src: url("fonts/Ubuntu-Regular.ttf");
+}
+
+html {
+    max-width: 70ch;
+    padding: 3em 1em;
+    margin: auto;
+    line-height: 1.75;
+    font-size: 1.25em;
+    font-family: Ubuntu-Regular, sans-serif;
+}
+
+body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    background-color: #A1AA6B;
+}
+
+header nav ul {
+    display: flex;
+    list-style-type: none;
+    padding: 0;
+}
+
+header nav li {
+    display: flex;
+    justify-content: center;
+    width: 100px;
+}
+
+section {
+    text-align: center;
+}
+
+section a p {
+    margin-bottom: -30px;
+}
+
+body a {
+    color: black;
+    text-decoration: none;
+}
+
+body h1 {
+    text-align: center;
+}
+
+body p {
+    text-align: center;
+}

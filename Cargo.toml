@@ -6,9 +6,16 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.64"
-actix-web = { version = "4.1.0", features = ["rustls"] }
+anyhow = "1.0.66"
+actix-web = { version = "4.2.1", features = ["rustls"] }
 actix-files = "0.6.2"
-tokio = { version = "1.21.0", features = ["full"] }
-rustls = "0.20.6"
+tokio = { version = "1.21.2", features = ["full"] }
+rustls = "0.20.7"
 rustls-pemfile = "1.0.1"
+clap = { version = "3.2.22", features = ["derive"] }
+sled = { git = "https://github.com/spacejam/sled.git" }
+dirs = "4.0.0"
+serde = { version = "1.0.147", features = ["derive"]}
+bincode = { version = "2.0.0-rc.2", features = ["serde"]}
+#nanoid = { git = "https://github.com/nikolay-govorov/nanoid.git" }
+sailfish = { git = "https://github.com/reticulis/sailfish.git" }

@@ -1,0 +1,4 @@
+template_dirs = ["html"]
+
+[optimizations]
+rm_whitespace = false
