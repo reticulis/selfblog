@@ -1,28 +1,11 @@
 use crate::blog::BlogPost;
+use crate::errors::ActixError;
 use crate::Blog;
 use actix_web::http::header::ContentType;
 use actix_web::http::Method;
-use actix_web::{get, web, HttpResponse, ResponseError};
+use actix_web::{get, web, HttpResponse};
 use sailfish::TemplateOnce;
-use std::error::Error;
-use std::fmt;
 use std::sync::Arc;
-
-struct ActixError<T: Error>(T);
-
-impl<T: Error> fmt::Debug for ActixError<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", &self.0)
-    }
-}
-
-impl<T: Error> fmt::Display for ActixError<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", &self.0)
-    }
-}
-
-impl<T: Error> ResponseError for ActixError<T> {}
 
 trait ContentResponse: TemplateOnce {
     fn to_response(self) -> HttpResponse {

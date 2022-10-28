@@ -1,10 +1,23 @@
 mod blog;
 mod database;
+mod errors;
+mod login_handler;
+mod models;
+mod password;
+mod register_handler;
 mod services;
 
 use crate::blog::Blog;
-use crate::services::{default_handler, home_page, not_found, page_css};
+use crate::database::Database;
+use crate::login_handler::login_user;
+use crate::register_handler::register_user;
+use crate::services::{default_handler, home_page, not_found};
 use actix_files::{Files, NamedFile};
+use actix_identity::IdentityMiddleware;
+use actix_session::storage::CookieSessionStore;
+use actix_session::SessionMiddleware;
+use actix_web::cookie::Key;
+use actix_web::middleware::Logger;
 use actix_web::{web, App as ActixApp, HttpServer};
 use anyhow::{anyhow, Result};
 use clap::Parser;
@@ -56,12 +69,27 @@ impl App {
 
         let socket_addr = SocketAddr::new(address, port);
 
-        let blog = Arc::new(Blog::new().unwrap());
+        let database = Arc::new(Database::new()?);
+        let blog = Arc::new(Blog::new(database.clone())?);
 
+        let database = database.clone();
         let blog = blog.clone();
+
+        let secret_key = Key::generate();
+
         HttpServer::new(move || {
+            let md_session =
+                SessionMiddleware::builder(CookieSessionStore::default(), secret_key.clone())
+                    .cookie_secure(true)
+                    .build();
+
             ActixApp::new()
+                .app_data(web::Data::new(database.clone()))
                 .app_data(web::Data::new(blog.clone()))
+                .app_data(web::JsonConfig::default().limit(1028 * 1028))
+                .wrap(IdentityMiddleware::default())
+                .wrap(md_session)
+                .wrap(Logger::default())
                 .service(web::resource("/").route(web::get().to(home_page)))
                 .service(web::resource("/page/{number}").route(web::get().to(home_page)))
                 .service(Files::new("/fonts", "html/fonts/"))
@@ -69,6 +97,11 @@ impl App {
                     web::get().to(|| async move { NamedFile::open("html/style.css").unwrap() }),
                 ))
                 .service(not_found)
+                .service(
+                    web::scope("/api")
+                        .service(web::resource("/register").route(web::post().to(register_user)))
+                        .service(web::resource("/login").route(web::post().to(login_user))),
+                )
                 .default_service(web::to(default_handler))
         })
         .bind_rustls(socket_addr, config)?
@@ -100,6 +133,8 @@ impl App {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    tracing_subscriber::fmt::init();
+
     let app = App::parse();
 
     app.run().await?;
