@@ -1,10 +1,11 @@
-use crate::database::Database;
+use crate::Database;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
 pub struct Blog {
     posts: Vec<(String, BlogPost)>,
-    // db: Database,
+    _db: Arc<Database>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -15,14 +16,13 @@ pub struct BlogPost {
 }
 
 impl Blog {
-    pub fn new() -> Result<Self> {
-        let db = Database::new()?;
+    pub fn new(db: Arc<Database>) -> Result<Self> {
         let posts = Self::get_posts(&db)?;
 
-        Ok(Self { posts /*db*/ })
+        Ok(Self { posts, _db: db })
     }
 
-    fn get_posts(db: &Database) -> Result<Vec<(String, BlogPost)>> {
+    fn get_posts(db: &Arc<Database>) -> Result<Vec<(String, BlogPost)>> {
         db.iter()
             .map(|v| {
                 let (id, post) = v?;
